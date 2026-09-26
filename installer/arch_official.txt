@@ -1,15 +1,10 @@
 blueman
 foot
 micro
-helix
 ddcutil
 wl-clipboard
 pavucontrol
-file-roller
-playerctl
 pamixer
-gwenview
-okular
 go
 terminus-font
 ttf-liberation
@@ -21,6 +16,6 @@ taplo-cli
 kdeconnect
 pciutils
 brightnessctl
-hyprlock
 cliphist
-hyprpicker
+zip
+unzip

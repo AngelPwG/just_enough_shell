@@ -1,7 +1,3 @@
-rose-pine-cursor
-rose-pine-hyprcursor
 quickshell-git
-swayfx
-persway-git
 ttf-mononoki-nerd
 tela-icon-theme
