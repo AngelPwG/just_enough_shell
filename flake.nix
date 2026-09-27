@@ -90,15 +90,6 @@
 
             ln -sfn share/jes $out/JES
 
-            mkdir -p $out/libexec
-            if [ ! -d "\$HOME/.config/JES" ]; then
-              mkdir -p "\$HOME/.config/JES"
-              cp -r "$out/share/jes/config/"* "\$HOME/.config/JES/"
-            fi
-            mkdir -p "\$HOME/.cache/JES/walls" "\$HOME/.cache/JES/wall_prevs" \
-                     "\$HOME/.cache/JES/jes_music_art" "\$HOME/.local/state"
-            EOF
-
             cp -r .config/JES/* $out/share/jes/config/
             cp -r .local/JES/matugen/* $out/share/jes/matugen/
             cp .local/share/fonts/ttf/FauxHanamin.ttf \
@@ -120,15 +111,12 @@
             WantedBy=graphical-session.target
             EOF
 
-            # 7) Динамические автокомплиты: bash + zsh + fish из ./completions/
-            #    (диспетчер __complete живёт в самом jes-cli, см. README там же)
             mkdir -p $out/share/zsh/site-functions $out/share/fish/vendor_completions.d
             if [ -d ./completions ]; then
               install -Dm644 completions/jes-cli.bash $out/share/bash-completion/completions/jes-cli
               install -Dm644 completions/_jes-cli   $out/share/zsh/site-functions/_jes-cli
               install -Dm644 completions/jes-cli.fish $out/share/fish/vendor_completions.d/jes-cli.fish
             else
-              # фолбэк: статический bash-комплит
               cat << 'EOF' > $out/share/bash-completion/completions/jes-cli
               _jes_cli_completion() {
                   local cur opts
@@ -192,6 +180,16 @@
               SUBSYSTEM=="i2c", KERNEL=="i2c-[0-9]*", TAG+="uaccess"
             '';
 
+            systemd.user.tmpfiles.rules = [
+              "d %h/.cache/JES                    0755 - - -"
+              "d %h/.cache/JES/walls              0755 - - -"
+              "d %h/.cache/JES/wall_prevs         0755 - - -"
+              "d %h/.cache/JES/jes_music_art      0755 - - -"
+              "d %h/.local/state                  0755 - - -"
+
+              "C %h/.config/JES                   0755 - - - ${cfg.package}/share/jes/config"
+            ];
+
             fonts.packages = with pkgs; [
               nerd-fonts.mononoki
               cfg.package
@@ -202,23 +200,26 @@
               cava libnotify inotify-tools dbus pciutils ffmpeg
               cliphist wl-clipboard slurp grim taplo python314 zip unzip
               foot lxqt.pavucontrol-qt blueman kdePackages.kdeconnect-kde
-              tela-icon-theme micro qt6.qtbase qt6.qtdeclarative qt6.qtbase
-              qt6.qtdeclarative qt6.qtmultimedia qt6.qtshadertools
-              qt6.qtwayland qt6.qtimageformats
-              ]) ++ (with pkgsU; [ matugen ]);
+              tela-icon-theme micro qt6.qtbase qt6.qtdeclarative
+              qt6.qtmultimedia qt6.qtshadertools qt6.qtwayland
+              qt6.qtimageformats
+            ]) ++ (with pkgsU; [ matugen ]);
 
             systemd.user.services.jes = lib.mkIf cfg.autoStart {
               description = "Just Enough Shell";
               wantedBy = [ "graphical-session.target" ];
               partOf = [ "graphical-session.target" ];
-              after = [ "graphical-session.target" ];
+              after = [
+                "graphical-session.target"
+                "systemd-tmpfiles-setup.service"
+              ];
+              wants = [ "systemd-tmpfiles-setup.service" ];
               serviceConfig = {
                 ExecStart = "${pkgsU.quickshell}/bin/qs -c ${cfg.package}/JES/quickshell";
                 Restart = "on-failure";
                 RestartSec = 2;
               };
             };
-
           };
         };
     };
