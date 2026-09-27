@@ -203,7 +203,7 @@
               foot lxqt.pavucontrol-qt blueman kdePackages.kdeconnect-kde
               tela-icon-theme micro qt6.qtbase qt6.qtdeclarative
               qt6.qtmultimedia qt6.qtshadertools qt6.qtwayland
-              qt6.qtimageformats
+              qt6.qtimageformats quickshell
             ]) ++ (with pkgsU; [ matugen ]);
 
             systemd.user.services.jes = lib.mkIf cfg.autoStart {
