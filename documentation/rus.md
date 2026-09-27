@@ -192,9 +192,9 @@
 - пересобeрите flake
 - в `configuration.nix` укажите
 ```nix
-services.jes = {
+programs.jes = {
   enable = true;
-  users = [ "your user" ];
+  # autoStart = true; # default - false
 };
 ```
 - пересоберите NixOS

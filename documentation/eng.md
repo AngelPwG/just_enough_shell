@@ -192,9 +192,9 @@ In jes-cli, micro is used for config editing; to exit use Ctrl+Q, and to save â€
 - rebuild the flake
 - In `configuration.nix` add:
 ```nix
-services.jes = {
+programs.jes = {
   enable = true;
-  users = [ "your user" ];
+  # autoStart = true; # default - false
 };
 ```
 - rebuild NixOS

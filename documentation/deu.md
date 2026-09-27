@@ -192,9 +192,9 @@ In jes-cli wird micro zur Bearbeitung der Config verwendet; zum Beenden Ctrl+Q, 
 - Flake neu bauen
 - In `configuration.nix` hinzufügen:
 ```nix
-services.jes = {
+programs.jes = {
   enable = true;
-  users = [ "your user" ];
+  # autoStart = true; # default - false
 };
 ```
 - NixOS neu bauen
