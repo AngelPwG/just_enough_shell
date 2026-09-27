@@ -45,8 +45,49 @@ var (
 	lastArtist     string
 )
 
+// ─── Пути относительно бинарника ────────────────────────────────────────────
+
+// binDir возвращает директорию запущенного бинарника (симлинки резолвятся).
+// Если определить не удалось — возвращает ".".
+func binDir() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "."
+	}
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = resolved
+	}
+	return filepath.Dir(exe)
+}
+
+// jesRoot возвращает корень JES — директорию, где лежат matugen/, quickshell/, ...
+// Бинарь ожидается в <root>/quickshell/<что-то>/binary, поэтому <root> = binDir/../..
+// Переопределяется переменной окружения JES_ROOT (удобно для `go run`).
+func jesRoot() string {
+	if v := os.Getenv("JES_ROOT"); v != "" {
+		return filepath.Clean(v)
+	}
+	candidate := filepath.Clean(filepath.Join(binDir(), "..", ".."))
+
+	// Sanity check: хотя бы один ожидаемый подкаталог должен существовать
+	for _, probe := range []string{"matugen", "quickshell"} {
+		if _, err := os.Stat(filepath.Join(candidate, probe)); err == nil {
+			return candidate
+		}
+	}
+
+	// Fallback на классическую установку в ~/.local/JES
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".local", "JES")
+}
+
+// jesPath склеивает путь относительно корня JES.
+func jesPath(rel string) string {
+	return filepath.Join(jesRoot(), rel)
+}
+
 func init() {
-	homeDir, _ := os.UserHomeDir()
+	_, _ = os.UserHomeDir() // оставлено на случай будущих нужд
 	cacheDir, _ := os.UserCacheDir()
 
 	customCacheDir = filepath.Join(cacheDir, "JES", "jes_music_art")
@@ -56,7 +97,10 @@ func init() {
 	_ = os.MkdirAll(appDir, 0755)
 
 	cachedFile = filepath.Join(appDir, "state.json")
-	defaultArt = filepath.Join(homeDir, ".local/JES/quickshell/bar/images/music.webp")
+
+	// Раньше было ~/.local/JES/quickshell/bar/images/music.webp
+	defaultArt = jesPath("quickshell/bar/images/music.webp")
+
 	lastArtVer = time.Now().UnixMilli()
 }
 

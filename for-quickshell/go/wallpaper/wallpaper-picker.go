@@ -55,6 +55,46 @@ func expandHome(p string) string {
 	return p
 }
 
+// ─── Пути относительно бинарника ────────────────────────────────────────────
+
+// binDir возвращает директорию запущенного бинарника (симлинки резолвятся).
+// Если определить не удалось — возвращает ".".
+func binDir() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "."
+	}
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = resolved
+	}
+	return filepath.Dir(exe)
+}
+
+// jesRoot возвращает корень JES — директорию, где лежат matugen/, quickshell/, ...
+// Бинарь ожидается в <root>/quickshell/<что-то>/binary, поэтому <root> = binDir/../..
+// Переопределяется переменной окружения JES_ROOT (удобно для `go run`).
+func jesRoot() string {
+	if v := os.Getenv("JES_ROOT"); v != "" {
+		return filepath.Clean(v)
+	}
+	candidate := filepath.Clean(filepath.Join(binDir(), "..", ".."))
+
+	// Sanity check: хотя бы один ожидаемый подкаталог должен существовать
+	for _, probe := range []string{"matugen", "quickshell"} {
+		if _, err := os.Stat(filepath.Join(candidate, probe)); err == nil {
+			return candidate
+		}
+	}
+
+	// Fallback на классическую установку в ~/.local/JES
+	return homeDir(".local/JES")
+}
+
+// jesPath склеивает путь относительно корня JES.
+func jesPath(rel string) string {
+	return filepath.Join(jesRoot(), rel)
+}
+
 func loadConfig() Config {
 	var cfg Config
 	if _, err := toml.DecodeFile(configPath, &cfg); err != nil {
@@ -510,7 +550,7 @@ func cmdCleanCache() {
 func runMatugen(imagePath, scheme string, useConfig bool) error {
 	args := []string{"image", imagePath, "-m", "dark", "-t", scheme, "--source-color-index", "0"}
 	if useConfig {
-		args = append(args, "-c", homeDir(".local/JES/matugen/config.toml"))
+		args = append(args, "-c", jesPath("matugen/config.toml"))
 	}
 	cmd := exec.Command("matugen", args...)
 	cmd.Stderr = os.Stderr
