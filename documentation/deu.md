@@ -2,7 +2,7 @@
 	<img src="https://img.shields.io/github/last-commit/ORFLEM/just_enough_shell?&style=for-the-badge&color=bbbbbb&label=Letzter%20Commit&logo=git&logoColor=D9E0EE&labelColor=1E202B" alt="GitHub last commit">
     <img src="https://img.shields.io/github/repo-size/ORFLEM/just_enough_shell?color=bbbbbb&label=Projektgr%C3%B6%C3%9Fe&logo=protondrive&style=for-the-badge&logoColor=D9E0EE&labelColor=1E202B" alt="Repository size">
     <img src="https://img.shields.io/github/stars/ORFLEM/just_enough_shell?color=bbbbbb&label=Projekt-Sterne&logo=andela&style=for-the-badge&logoColor=D9E0EE&labelColor=1E202B" alt="Repository size">
-	<img src="./images/preview.webp" width="900px">
+	<img src="https://github.com/ORFLEM/dots/blob/main/images/7.webp?raw=true" width="900px">
 	<h1>> Just Enough Shell _</h1>
 	<p>Für den Alltag gebaut, nicht für Screenshots.</p>
 </div>
@@ -121,31 +121,29 @@ In jes-cli wird micro zur Bearbeitung der Config verwendet; zum Beenden Ctrl+Q, 
 
 ## -- Wie *JES* aussieht --:
 ### Steuerleiste
-![alt_image](./images/1.webp)
-![alt_image](./images/2.webp)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/1.webp?raw=true)
 
 ### Hintergrundbildauswahl
-![alt_image](./images/3.webp)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/3.webp?raw=true)
 
 ### Player
-![alt_image](./images/4.webp)
-![alt_image](./images/5.webp)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/4.webp?raw=true)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/5.webp?raw=true)
 
 ### Power-Tasten
-![alt_image](./images/6.webp)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/6.webp?raw=true)
 
 ### Jwindow
-![alt_image](./images/7.webp)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/7.webp?raw=true)
 
 ### Popup für Lautstärke und Helligkeit
-![alt_image](./images/8.webp)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/8.webp?raw=true)
 
 ### Anwendungsstarter
-![alt_image](./images/9.webp)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/9.webp?raw=true)
 
 ### Sperrbildschirm
-![alt_image](./images/10.webp)
-![alt_image](./images/11.webp)
+![alt_image](https://github.com/ORFLEM/dots/blob/main/images/10.webp?raw=true)
 
 \* Screenshots aufgenommen auf den [Dotfiles des Autors](https://github.com/ORFLEM/dots)
 

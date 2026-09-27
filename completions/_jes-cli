@@ -1,0 +1,9 @@
+#compdef jes-cli
+# zsh completion для jes-cli (динамическая)
+# Установка: в любой каталог из $fpath как _jes-cli
+_jes_cli() {
+    local -a completions
+    completions=(${(f)"$(jes-cli __complete ${words[2,-1]})"})
+    _describe 'jes-cli' completions
+}
+_jes_cli "$@"

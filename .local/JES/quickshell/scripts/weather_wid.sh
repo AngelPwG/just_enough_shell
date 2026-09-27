@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 CACHE_FILE="$HOME/.cache/JES/JES_weather_cache.json"
-CACHE_TIMEOUT=600                
-CACHE_FALLBACK_TIMEOUT=43200      
+CONFIG_FILE="$HOME/.cache/JES/JES_config.json"
+CACHE_TIMEOUT=600
+CACHE_FALLBACK_TIMEOUT=43200
 
 get_icon() {
     case $1 in
@@ -21,17 +22,28 @@ get_icon() {
 }
 
 get_weather_data() {
-    local KEY=$(grep 'openweather_key' ~/.config/JES/config.toml | cut -d '"' -f2)
-    local CITY=$(grep 'timezone' ~/.config/JES/config.toml | cut -d '"' -f2)
-    local API="https://api.openweathermap.org/data/2.5"
-    local DISTRO=$(. /etc/os-release && echo $ID)
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        return 1
+    fi
 
-    if [[ $CITY == "" && $DISTRO == "nixos" ]]; then
-        CITY=$(grep 'timezone' /etc/nixos/user-config.toml | cut -d '"' -f2 | awk -F '/' '{print $2}')
+    local KEY CITY API DISTRO
+    KEY=$(jq -r '.settings.openweather_key // ""' "$CONFIG_FILE" 2>/dev/null)
+    CITY=$(jq -r '.settings.timezone // ""' "$CONFIG_FILE" 2>/dev/null)
+
+    # Нет ключа — тихо выходим; бар уже сам скрыл тайл через has_owm_key
+    [[ -z "$KEY" ]] && return 1
+
+    API="https://api.openweathermap.org/data/2.5"
+    DISTRO=$(. /etc/os-release && echo "$ID")
+
+    if [[ -z "$CITY" && "$DISTRO" == "nixos" ]]; then
+        CITY=$(grep 'timezone' /etc/nixos/user-config.toml \
+            | cut -d '"' -f2 | awk -F '/' '{print $2}')
     fi
 
     local current
-    current=$(curl -sf --max-time 10 "$API/weather?appid=$KEY&q=$CITY&units=metric&lang=en") || return 1
+    current=$(curl -sf --max-time 10 \
+        "$API/weather?appid=$KEY&q=$CITY&units=metric&lang=en") || return 1
 
     local temp feels humidity pressure wind icon_code icon desc
     temp=$(echo "$current" | jq -r '.main.temp | round')
@@ -44,7 +56,8 @@ get_weather_data() {
     desc=$(echo "$current" | jq -r '.weather[0].description | ascii_upcase')
 
     local forecast_raw
-    forecast_raw=$(curl -sf --max-time 10 "$API/forecast?appid=$KEY&q=$CITY&units=metric&lang=en" \
+    forecast_raw=$(curl -sf --max-time 10 \
+        "$API/forecast?appid=$KEY&q=$CITY&units=metric&lang=en" \
       | jq '
         .list
         | map(select(.dt_txt | contains("12:00:00")))
@@ -68,7 +81,7 @@ get_weather_data() {
     updated=$(date '+%H:%M')
 
     jq -n \
-        --arg city "$CITY"\
+        --arg city "$CITY" \
         --arg temp "$temp" \
         --arg feels "$feels" \
         --arg humidity "$humidity" \

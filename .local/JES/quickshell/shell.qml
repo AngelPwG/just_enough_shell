@@ -346,7 +346,9 @@ ShellRoot {
             root._cfg_margins         = s.margins                 ?? 3
             root._cfg_animations      = s.animation               ?? 1.0
             root._cfg_bg_type         = s.bg_type                 ?? "mono"
-            root._cfg_API_key         = s.openweather_key         ?? ""
+            
+            var rawKey = s.openweather_key
+            root.has_owm_key = rawKey !== undefined && rawKey !== null && String(rawKey).trim().length > 0
 
         } catch(e) {
             console.error("[shell] Config parse error:", e, "| raw:", raw)
@@ -366,27 +368,19 @@ ShellRoot {
                 return
             }
             pluginListModel.clear()
-            root.pluginRequiredSettings = ({})
-            root.pluginConfigs = ({})
-
+    
             for (var i = 0; i < entries.length; i++) {
                 var entry = entries[i]
                 var hasWmConnect = entry.api_request
                 && Array.isArray(entry.api_request)
                 && entry.api_request.indexOf("wm_connect") !== -1
-
-                // отдельные объекты — не зависят от ListModel-магии
-                root.pluginRequiredSettings[entry.name] = Array.isArray(entry.required_settings)
-                    ? entry.required_settings : []
-                root.pluginConfigs[entry.name] = entry.plugin_config ?? ({})
-
+    
                 pluginListModel.append({
-                    name:         entry.name,
-                    source:       entry.source,
-                    main_source:  entry.main_source,
-                    active:       entry.active,
-                    wm_connect:   hasWmConnect
-                    // required_settings и plugin_config сюда НЕ кладём
+                    name:        entry.name,
+                    source:      entry.source,
+                    main_source: entry.main_source,
+                    active:      entry.active,
+                    wm_connect:  hasWmConnect
                 })
             }
         } catch(e) {
@@ -429,7 +423,6 @@ ShellRoot {
     property int    _cfg_margins:         3
     property string _cfg_bg_type:         "mono"
     property string _cfg_pluginDir:       ""
-    property string _cfg_API_key:         ""
     property var    _pluginConfigList:    []
 
     // ── Public properties ─────────────────────────────────────────────────
@@ -454,7 +447,7 @@ ShellRoot {
     property int    spacing:         _cfg_spacing
     property int    margins:         _cfg_margins
     property string bg_type:         _cfg_bg_type
-    property string owm_key:         _cfg_API_key
+    property bool   has_owm_key:     false
     property string wm:              _cfg_wm      == "auto" ? (Quickshell.env("XDG_CURRENT_DESKTOP") ?? "sway") : _cfg_wm
     property string wm_type:         _cfg_wm_type == "auto" ? (wm == "driftwm" ? "coordinates" : "workspaces") : _cfg_wm_type
 
@@ -468,8 +461,6 @@ ShellRoot {
         id: pluginListModel
     }
     property var pluginRegistry: ({})
-    property var pluginRequiredSettings: ({})   // name → [ключи]
-    property var pluginConfigs: ({})            // name → {ключ: значение}
 
     Repeater {
         model: pluginListModel
@@ -477,35 +468,40 @@ ShellRoot {
             id: pluginLoader
             active: model.active
             source: model.active ? (model.main_source ? "file://" + model.source + "/" + model.main_source : "") : ""
-
+    
+            // settings.json, сгенерированный plugin_list.sh рядом с плагином
+            FileView {
+                id: pluginSettingsFile
+                path: model.source + "/settings.json"
+                watchChanges: true
+                onFileChanged: reload()
+                onLoaded: pluginLoader._applySettings()
+            }
+    
+            function _applySettings() {
+                if (!item) return
+                if (!item.hasOwnProperty("requiredSettings")) return
+                try {
+                    var txt = (pluginSettingsFile.text() ?? "").trim()
+                    if (!txt) return
+                    var out = JSON.parse(txt)
+                    item.requiredSettings = out
+                    console.log("[plugin] " + model.name + " → applied:", JSON.stringify(out))
+                } catch (e) {
+                    console.warn("[plugin] " + model.name + " settings parse error:", e)
+                }
+            }
+    
             onLoaded: {
                 root.pluginRegistry[model.name] = item
                 console.log("[plugin] Загружен:", model.name)
-
-                var wanted = root.pluginRequiredSettings[model.name] || []
-                var provided = root.pluginConfigs[model.name] || ({})
-
-                if (wanted.length > 0 && item && item.hasOwnProperty("requiredSettings")) {
-                    var out = ({})
-                    for (var i = 0; i < wanted.length; i++) {
-                        var k = wanted[i]
-                        if (provided[k] !== undefined) {
-                            out[k] = provided[k]
-                        } else {
-                            console.warn("[plugin] " + model.name +
-                                ": missing setting '" + k + "'")
-                        }
-                    }
-                    item.requiredSettings = out
-                    console.log("[plugin] " + model.name +
-                        " → applied:", JSON.stringify(out))
-                }
-
+                _applySettings()
+    
                 if (model.wm_connect && item) {
-                    root.wm_connect = pluginLoader.item
+                    root.wm_connect = item
                 }
             }
-
+    
             onStatusChanged: {
                 if (status === Loader.Loading) {
                     lastPluginMarker.setText(model.name)

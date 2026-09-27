@@ -1,5 +1,5 @@
 <div align="center">
-	<img src="./documentation/images/preview.webp" width="900px">
+	<img src="https://github.com/ORFLEM/dots/blob/main/images/7.webp?raw=true" width="900px">
 	<h1>> Just Enough Shell _</h1>
 	<p>Built for everyday use, not for screenshots.</p>
 </div>

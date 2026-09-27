@@ -16,6 +16,7 @@ WlrLayershell {
     
     property var workspacesData: ({})
     property var cameraData: ({})
+    property var batteryData: ({})
     property bool wsHover: false
     property bool sttngsHover: false
     property string activeWindow: ""
@@ -86,9 +87,22 @@ WlrLayershell {
                 Item {
                     id: launcherItem
                     anchors.verticalCenter: parent.verticalCenter
-                    property bool hovered: false
                     width: launcherContent.width + 4
                     height: panel.height - root.margins * 2 - root.wtw
+
+                    property bool hovered: false
+                    property string avatarPath: ""
+
+                    // Аватарка: цепочка AccountsService → ~/.face → ~/.face.icon,
+                    // см. scripts/user_avatar.sh. Читаем один раз при старте панели.
+                    Process {
+                        id: avatarProbe
+                        command: ["sh", root.localPath(Qt.resolvedUrl("../scripts/user_avatar.sh"))]
+                        stdout: StdioCollector {
+                            onStreamFinished: launcherItem.avatarPath = this.text.trim()
+                        }
+                        Component.onCompleted: running = true
+                    }
                     
                     Rectangle {
                         anchors.fill: parent
@@ -124,16 +138,13 @@ WlrLayershell {
                             color: "transparent"
                             Image {
                                 id: userAvatar
-                                source: "file:///var/lib/AccountsService/icons/" + Quickshell.env("USER")
+                                source: launcherItem.avatarPath !== "" ? "file://" + launcherItem.avatarPath
+                                                                : Qt.resolvedUrl("images/hui.webp")
                                 sourceSize.width: parent.height * 2
                                 sourceSize.height: parent.height * 2
                                 height: parent.height
                                 width: height
-                                onStatusChanged: {
-                                    if (status === Image.Error) {
-                                        source = Qt.resolvedUrl("images/hui.webp")
-                                    }
-                                }
+                                fillMode: Image.PreserveAspectCrop
                             }
                         }
                         Item {
@@ -355,7 +366,7 @@ WlrLayershell {
                 //weather
                 Item {
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: root.owm_key != ""
+                    visible: root.has_owm_key
                     id: weatherItem
                     property bool hovered: false
                     width: weatherRow.width + 12
@@ -1020,7 +1031,7 @@ WlrLayershell {
                     Text {
                         id: powerText
                         anchors.centerIn: parent
-                        text: vars.bat.name == "null" ? "" : ( panel.width >= 2560 ? vars.bat.name + "  " + vars.bat.charge + "% " + vars.bat.icon : vars.bat.charge + "% " + vars.bat.icon )                                                                                                                                                                                                                                                                   // poshalko)
+                        text: vars.bat.name == "null" ? ( batteryData.its_laptop ? batteryData.capacity + "%" : "") : ( panel.width >= 2560 ? vars.bat.name + "  " + vars.bat.charge + "% " + vars.bat.icon : vars.bat.charge + "% " + vars.bat.icon )                                                                                                                                                                                                                                                                   // poshalko)
                         color: powerItem.hovered ? col.fontDark : col.font
                         font.family: fontFamily
                         font.pixelSize: fontSize

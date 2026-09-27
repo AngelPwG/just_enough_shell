@@ -1,30 +1,5 @@
 #!/usr/bin/env bash
-#
-# JES plugin backend
-#
-# Usage:
-#   plugin_list.sh [version] [command] [extra]
-#
-# Commands:
-#   build [--force]  (default) — build JSON + refresh cache + run launchers
-#   list                       — table: name, status, warning
-#   list-json                  — same, but JSON to stdout
-#   cache                      — force rebuild cache only
-#   clear                      — wipe cache
-#
-# Config (read from ~/.config/JES/config.toml):
-#   directory = "~/..."          — plugin source directory
-#   [settings] enableFolders = true|false
-#     true  (default) — plugins may live as folders in the plugins dir
-#     false           — folder-based plugins become disabled (status=disabled)
-#                       with warning "plugin not in plugin bundle"
-#
-# Status modes:
-#   active        — registered, active=true, compatible
-#   disabled      — registered but active=false, or blocked by enableFolders=false
-#   unregistered  — not listed in config.toml
-#   broken        — incompatible, or blacklisted (crashed UI)
-#
+
 set -uo pipefail
 
 CONFIG_FILE="$HOME/.config/JES/config.toml"
@@ -173,6 +148,33 @@ _each_cached_manifest() {
     find "$CACHE_DIR" -maxdepth 2 -type f -name "manifest.json" 2>/dev/null | sort
 }
 
+_write_plugin_settings() {
+    local name="$1"
+    local dest_dir="$2"
+    local manifest="$dest_dir/manifest.json"
+
+    [[ ! -f "$manifest" ]] && return 0
+
+    local reqset pcfg settings
+    reqset=$(jq -c '.required_settings // [] | if type == "array" then . else [] end' \
+        "$manifest" 2>/dev/null)
+    [[ -z "$reqset" || "$reqset" == "null" ]] && reqset="[]"
+
+    pcfg=$(get_plugin_config_json "$name")
+    [[ -z "$pcfg" || "$pcfg" == "null" ]] && pcfg="{}"
+
+    settings=$(jq -nc \
+        --argjson cfg "$pcfg" \
+        --argjson req "$reqset" \
+        'reduce $req[] as $k ({};
+            ($cfg | getpath($k | split("."))) as $v
+            | if $v != null then .[$k] = $v else . end
+        )' 2>/dev/null)
+    [[ -z "$settings" || "$settings" == "null" ]] && settings="{}"
+
+    printf '%s\n' "$settings" > "$dest_dir/settings.json"
+}
+
 # =====================================================================
 #  Кэш
 # =====================================================================
@@ -207,6 +209,7 @@ cache_plugins() {
 
         rm -f "$CACHE_DIR/$pname/.jes_from_bundle"
         touch "$CACHE_DIR/$pname/.jes_from_folder"
+        _write_plugin_settings "$pname" "$CACHE_DIR/$pname"
     done < <(find "$DIR" -type f -name "manifest.json" -print0)
 
     # 2. Архивы .jes.pb
@@ -242,6 +245,7 @@ cache_plugins() {
 
         rm -f "$CACHE_DIR/$pname2/.jes_from_folder"
         touch "$CACHE_DIR/$pname2/.jes_from_bundle"
+        _write_plugin_settings "$pname2" "$CACHE_DIR/$pname2"
 
         rm -rf "$tmp_dir"
     done < <(find "$DIR" -maxdepth 1 -type f -name "*.jes.pb" -print0)
