@@ -71,7 +71,7 @@
             cp -r .local/JES/quickshell/* $out/share/jes/quickshell/
             chmod 755 $out/share/jes/quickshell/scripts/* || true
 
-            for b in cal Cava-internal music; do
+            for b in cal Cava-internal music cal; do
               install -Dm755 ${go.tools}/bin/$b \
                 $out/share/jes/quickshell/scripts/$b
             done
@@ -82,8 +82,6 @@
             for b in wallpaper-picker; do
               install -Dm755 ${go.wallpaper-picker}/bin/$b \
                 $out/share/jes/quickshell/wallpaper/$b
-              install -Dm755 ${go.wallpaper-picker}/bin/$b \
-                $out/share/jes/quickshell/scripts/$b
             done
 
             install -Dm755 .local/bin/jes-cli $out/bin/jes-cli
@@ -203,8 +201,8 @@
               foot lxqt.pavucontrol-qt blueman kdePackages.kdeconnect-kde
               tela-icon-theme micro qt6.qtbase qt6.qtdeclarative
               qt6.qtmultimedia qt6.qtshadertools qt6.qtwayland
-              qt6.qtimageformats quickshell
-            ]) ++ (with pkgsU; [ matugen ]);
+              qt6.qtimageformats
+            ]) ++ (with pkgsU; [ matugen quickshell ]);
 
             systemd.user.services.jes = lib.mkIf cfg.autoStart {
               description = "Just Enough Shell";
