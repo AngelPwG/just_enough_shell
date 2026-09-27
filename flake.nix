@@ -71,7 +71,7 @@
             cp -r .local/JES/quickshell/* $out/share/jes/quickshell/
             chmod 755 $out/share/jes/quickshell/scripts/* || true
 
-            for b in cal Cava-internal music cal; do
+            for b in cal Cava-internal music; do
               install -Dm755 ${go.tools}/bin/$b \
                 $out/share/jes/quickshell/scripts/$b
             done
