@@ -116,6 +116,7 @@
               install -Dm644 completions/jes-cli.bash $out/share/bash-completion/completions/jes-cli
               install -Dm644 completions/_jes-cli   $out/share/zsh/site-functions/_jes-cli
               install -Dm644 completions/jes-cli.fish $out/share/fish/vendor_completions.d/jes-cli.fish
+
             else
               cat << 'EOF' > $out/share/bash-completion/completions/jes-cli
               _jes_cli_completion() {
@@ -129,7 +130,7 @@
                   fi
               }
               complete -F _jes_cli_completion jes-cli
-              EOF
+            EOF
             fi
 
             runHook postInstall
