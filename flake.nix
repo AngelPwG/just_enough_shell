@@ -74,7 +74,6 @@
             for b in cal Cava-internal music; do
               install -Dm755 ${go.tools}/bin/$b \
                 $out/share/jes/quickshell/scripts/$b
-              ln -s $out/share/jes/quickshell/scripts/$b $out/bin/jes-$b
             done
             install -Dm755 ${go.tools}/bin/launch \
               $out/share/jes/quickshell/launcher/launch
@@ -85,7 +84,6 @@
                 $out/share/jes/quickshell/wallpaper/$b
               install -Dm755 ${go.wallpaper-picker}/bin/$b \
                 $out/share/jes/quickshell/scripts/$b
-              ln -s $out/share/jes/quickshell/wallpaper/$b $out/bin/jes-$b
             done
 
             install -Dm755 .local/bin/jes-cli $out/bin/jes-cli
@@ -93,19 +91,13 @@
             ln -sfn share/jes $out/JES
 
             mkdir -p $out/libexec
-            cat > $out/libexec/jes-seed <<EOF
-#!/usr/bin/env bash
-# первый запуск: конфиг из шаблона + кэш-директории + symlink для QML,
-# у которого пока хардкод на ~/.local/JES
-if [ ! -d "\$HOME/.config/JES" ]; then
-  mkdir -p "\$HOME/.config/JES"
-  cp -r "$out/share/jes/config/"* "\$HOME/.config/JES/"
-fi
-mkdir -p "\$HOME/.cache/JES/walls" "\$HOME/.cache/JES/wall_prevs" \
-         "\$HOME/.cache/JES/jes_music_art" "\$HOME/.local/state"
-ln -sfn "$out/share/jes" "\$HOME/.local/JES"
-EOF
-            chmod +x $out/libexec/jes-seed
+            if [ ! -d "\$HOME/.config/JES" ]; then
+              mkdir -p "\$HOME/.config/JES"
+              cp -r "$out/share/jes/config/"* "\$HOME/.config/JES/"
+            fi
+            mkdir -p "\$HOME/.cache/JES/walls" "\$HOME/.cache/JES/wall_prevs" \
+                     "\$HOME/.cache/JES/jes_music_art" "\$HOME/.local/state"
+            EOF
 
             cp -r .config/JES/* $out/share/jes/config/
             cp -r .local/JES/matugen/* $out/share/jes/matugen/
@@ -120,7 +112,6 @@ EOF
             Requisite=graphical-session.target
 
             [Service]
-            ExecStartPre=$out/libexec/jes-seed
             ExecStart=${quickshell}/bin/qs -c ${storeShell}
             Restart=on-failure
             RestartSec=2
@@ -211,8 +202,10 @@ EOF
               cava libnotify inotify-tools dbus pciutils ffmpeg
               cliphist wl-clipboard slurp grim taplo python314 zip unzip
               foot lxqt.pavucontrol-qt blueman kdePackages.kdeconnect-kde
-              tela-icon-theme micro
-            ]) ++ (with pkgsU; [ matugen ]);
+              tela-icon-theme micro qt6.qtbase qt6.qtdeclarative qt6.qtbase
+              qt6.qtdeclarative qt6.qtmultimedia qt6.qtshadertools
+              qt6.qtwayland qt6.qtimageformats
+              ]) ++ (with pkgsU; [ matugen ]);
 
             systemd.user.services.jes = lib.mkIf cfg.autoStart {
               description = "Just Enough Shell";
@@ -220,7 +213,6 @@ EOF
               partOf = [ "graphical-session.target" ];
               after = [ "graphical-session.target" ];
               serviceConfig = {
-                ExecStartPre = "${cfg.package}/libexec/jes-seed";
                 ExecStart = "${pkgsU.quickshell}/bin/qs -c ${cfg.package}/JES/quickshell";
                 Restart = "on-failure";
                 RestartSec = 2;
