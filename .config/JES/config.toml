@@ -13,7 +13,7 @@ mainRad = 10 # 0-25
 fontSize = 17
 fontFamily = "Mononoki Nerd Font Propo"
 enable_base16 = false
-do_not_sync_rad = false
+do_not_sync_rad = true # disable sync wm roundings with jes mainRad
 disableCorners = false # disable roundings your monitors
 
 # bar
@@ -39,4 +39,5 @@ enableFolders = false
 
 # [[plugin]]
 # name = "example plugin"
+# uuid = "exemaple-uuidv4-from-manifest"
 # active = false

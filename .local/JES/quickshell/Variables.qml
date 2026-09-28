@@ -7,6 +7,7 @@ Item {
     property var vol: ({})
     property var cal: ({})
     property var bat: ({})
+    property var lbat: ({})
     property bool showConnect: false
     property string oldname: "null"
 
@@ -55,5 +56,13 @@ Item {
         id: connectTimer
         interval: 2000
         onTriggered: vars.showConnect = false
+    }
+    
+    JsonListen {
+        id: lBatStream
+        command: localPath(Qt.resolvedUrl("scripts/battery.sh"))
+        onDataChanged: {
+            lbat = data
+        }
     }
 }

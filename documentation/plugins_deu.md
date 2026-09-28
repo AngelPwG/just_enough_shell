@@ -135,9 +135,10 @@ Item {
 - Für die Anbindung an JES muss das Plugin eine `manifest.json` haben; unten ist die maximale Basisvariante für JES ohne Drittanbieter-Erweiterungen:
 ```json
 {
-  "api_version": "0.2.0",
+  "api_version": "0.2.1",
   "plugin_version": "1.0",
   "name": "plugin name",
+  "uuid": "uuidv4-here",
   "api_request": [
     "api_extending",
     "launcher",
@@ -164,27 +165,25 @@ Item {
 - Zur Aktivierung des Plugins in `config.toml` in `~/.config/JES/` folgendes angeben:
 ```toml
 [[plugin]]
-name = "plugin name" # data in property name from manifest.json
+name = "plugin name" # data in property name from manifest.json, also `jes-cli getPlugin` show it
+uuid = "uuidv4-here" # data in property uuid from manifest.json, also `jes-cli getPlugin` show it
 active = true
 ```
 
 - Darüber hinaus können im selben toml-Block eigene Parameter angegeben werden, indem deren Namen in der JSON-Liste `required_settings` aufgeführt werden.
 - Zur Übernahme der Daten wird folgende QML-Verbindung verwendet:
 ```qml
-Item {
-    id: confParameters
-
-    // Hier legt JES die Werte aus dem [[plugin]]-Block von config.toml ab
-    property var requiredSettings: ({})
-
-    readonly property int      numbers:      requiredSettings["numbers"]      ?? 3
-    readonly property bool     enabled:      requiredSettings["enabled"]      ?? false
-    readonly property real     float:        requiredSettings["float"]        ?? 1.0
-    readonly property string   text:         requiredSettings["text"]         ?? "hi"
-
-    // Debug
-    onRequiredSettingsChanged: {
-        console.log("[myplugin] settings:", JSON.stringify(requiredSettings))
+FileView {
+    id: paramsFile
+    path: Qt.resolvedUrl("./settings.json")
+    watchChanges: true
+    onFileChanged: reload()
+    JsonAdapter {
+        id: params
+        property string text
+        property int    numbers
+        property bool   enabled
+        property real   float
     }
 }
 ```
@@ -197,6 +196,7 @@ Item {
 ```toml
 [[plugin]]
 name = "myplugin"
+uuid = "uuidv4-from-manifest"
 active = true
 numbers = 5
 enabled = true

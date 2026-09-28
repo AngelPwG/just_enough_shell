@@ -24,7 +24,7 @@ ShellRoot {
     id: root
 
     readonly property string projectId: "Just Enough Shell"
-    readonly property string apiVersion: "0.2.0"
+    readonly property string apiVersion: "0.2.1"
 
     // ── Colors ──────────────────────────────────────────────────────────────
     FileView {
@@ -375,8 +375,15 @@ ShellRoot {
                 && Array.isArray(entry.api_request)
                 && entry.api_request.indexOf("wm_connect") !== -1
     
+                var uuid = entry.uuid
+                if (!uuid || String(uuid).trim() === "") {
+                    console.warn("[plugin] no uuid for '" + entry.name + "', falling back to name")
+                    uuid = entry.name
+                }
+    
                 pluginListModel.append({
                     name:        entry.name,
+                    uuid:        uuid,
                     source:      entry.source,
                     main_source: entry.main_source,
                     active:      entry.active,
@@ -486,15 +493,15 @@ ShellRoot {
                     if (!txt) return
                     var out = JSON.parse(txt)
                     item.requiredSettings = out
-                    console.log("[plugin] " + model.name + " → applied:", JSON.stringify(out))
+                    console.log("[plugin] " + model.name + " (" + model.uuid + ") → applied:", JSON.stringify(out))
                 } catch (e) {
                     console.warn("[plugin] " + model.name + " settings parse error:", e)
                 }
             }
     
             onLoaded: {
-                root.pluginRegistry[model.name] = item
-                console.log("[plugin] Загружен:", model.name)
+                root.pluginRegistry[model.uuid] = item
+                console.log("[plugin] Загружен:", model.name, "| uuid:", model.uuid)
                 _applySettings()
     
                 if (model.wm_connect && item) {
@@ -504,10 +511,10 @@ ShellRoot {
     
             onStatusChanged: {
                 if (status === Loader.Loading) {
-                    lastPluginMarker.setText(model.name)
+                    lastPluginMarker.setText(model.uuid)
                 } else if (status === Loader.Error) {
-                    console.error("[plugin] Ошибка загрузки:", model.name)
-                    Quickshell.execDetached(["jes-cli", "blacklistAdd", model.name])
+                    console.error("[plugin] Ошибка загрузки:", model.name, "| uuid:", model.uuid)
+                    Quickshell.execDetached(["jes-cli", "blacklistAdd", model.uuid])
                 }
             }
         }
@@ -636,6 +643,9 @@ ShellRoot {
         }
         function lockScreen() {
             lockScreen.lock();
+        }
+        function ping(): string {
+            return "pong";
         }
     }
 

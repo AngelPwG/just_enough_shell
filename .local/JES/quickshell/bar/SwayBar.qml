@@ -30,27 +30,7 @@ BaseBar {
             kbLayout = typeof data === 'string' ? data : ""
         }
     }
-
-    JsonListen {
-        id: batteryStream
-        command: localPath(Qt.resolvedUrl("../scripts/battery.sh"))
-        debug: false
-        
-        onDataChanged: {
-            batteryData = data
-        }
-    }
-
-    JsonListen {
-        id: batteryStream
-        command: localPath(Qt.resolvedUrl("../scripts/battery.sh"))
-        debug: false
-        
-        onDataChanged: {
-            batteryData = data
-        }
-    }   
-    
+   
     function changeWorkspace(id) {
         Quickshell.execDetached(["swaymsg", "workspace", "number", id.toString()])
     }

@@ -136,9 +136,10 @@ Item {
 - для подключения к JES у плагина должен быть `manifest.json`, ниже приведён максимальный базовый вариант для JES без сторонних расширений:
 ```json
 {
-  "api_version": "0.2.0",
+  "api_version": "0.2.1",
   "plugin_version": "1.0",
   "name": "plugin name",
+  "uuid": "uuidv4-here",
   "api_request": [
     "api_extending",
     "launcher",
@@ -165,27 +166,25 @@ Item {
 - Для активации плагина в `config.toml` в `~/.config/JES/` надо указать следующие моменты:
 ```toml
 [[plugin]]
-name = "plugin name" # data in property name from manifest.json
+name = "plugin name" # data in property name from manifest.json, also `jes-cli getPlugin` show it
+uuid = "uuidv4-here" # data in property uuid from manifest.json, also `jes-cli getPlugin` show it
 active = true
 ```
 
 - также ниже в этом же toml блоке можно указывать свои параметры, указав их названия в json list блоке `required_settings`.
 - для принятия данных используется следующее подключение в qml: 
 ```qml
-Item {
-    id: confParameters
-
-    // Сюда JES положит значения из [[plugin]] блока config.toml
-    property var requiredSettings: ({})
-
-    readonly property int      numbers:      requiredSettings["numbers"]      ?? 3
-    readonly property bool     enabled:      requiredSettings["enabled"]      ?? false
-    readonly property real     float:        requiredSettings["float"]        ?? 1.0
-    readonly property string   text:         requiredSettings["text"]         ?? "hi"
-
-    // Отладка
-    onRequiredSettingsChanged: {
-        console.log("[myplugin] settings:", JSON.stringify(requiredSettings))
+FileView {
+    id: paramsFile
+    path: Qt.resolvedUrl("./settings.json")
+    watchChanges: true
+    onFileChanged: reload()
+    JsonAdapter {
+        id: params
+        property string text
+        property int    numbers
+        property bool   enabled
+        property real   float
     }
 }
 ```
@@ -198,6 +197,7 @@ Item {
 ```toml
 [[plugin]]
 name = "myplugin"
+uuid = "uuidv4-from-manifest"
 active = true
 numbers = 5
 enabled = true

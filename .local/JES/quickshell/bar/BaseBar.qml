@@ -16,7 +16,6 @@ WlrLayershell {
     
     property var workspacesData: ({})
     property var cameraData: ({})
-    property var batteryData: ({})
     property bool wsHover: false
     property bool sttngsHover: false
     property string activeWindow: ""
@@ -1031,7 +1030,7 @@ WlrLayershell {
                     Text {
                         id: powerText
                         anchors.centerIn: parent
-                        text: vars.bat.name == "null" ? ( batteryData.its_laptop ? batteryData.capacity + "%" : "") : ( panel.width >= 2560 ? vars.bat.name + "  " + vars.bat.charge + "% " + vars.bat.icon : vars.bat.charge + "% " + vars.bat.icon )                                                                                                                                                                                                                                                                   // poshalko)
+                        text: vars.bat.name == "null" ? ( vars.lbat.its_laptop ? vars.lbat.capacity + "%" : "") : ( panel.width >= 2560 ? vars.bat.name + "  " + vars.bat.charge + "% " + vars.bat.icon + ( vars.lbat.its_laptop ? "PC: " + vars.lbat.capacity + "%" : "") : vars.bat.charge + "% " + vars.bat.icon + ( vars.lbat.its_laptop ? "PC: " + vars.lbat.capacity + "%" : ""))                                                                                                                                                                                                                                                                   // poshalko)
                         color: powerItem.hovered ? col.fontDark : col.font
                         font.family: fontFamily
                         font.pixelSize: fontSize

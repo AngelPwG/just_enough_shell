@@ -14,7 +14,7 @@ BLACKLIST_FILE="$HOME/.cache/JES/blacklist"
 UI_TOKEN_FILE="$HOME/.cache/JES/aura_token"
 CORE_CONFIG="/etc/jes/coreaura.toml"
 
-JES_HOST_VERSION="${JES_HOST_VERSION:-0.2.0}"
+JES_HOST_VERSION="${JES_HOST_VERSION:-0.2.1}"
 SHELL_PID_FILE="${XDG_RUNTIME_DIR:-/tmp}/jes-shell.pid"
 
 export QT_PLUGIN_PATH="/run/current-system/sw/lib/qt-6/plugins:$SCRIPT_DIR/../JES/quickshell/"
@@ -38,7 +38,8 @@ toggleLaunch()     { call_method "toggleLaunch"; }
 toggleJwindow()    { call_method "toggleJwindow"; }
 toggleMap()        { call_method "toggleMap"; }
 screenpicker()     { call_method "screenpicker"; }
-lockScreen()     { call_method "lockScreen"; }
+lockScreen()       { call_method "lockScreen"; }
+ping()             { call_method "ping"; }
 
 # ---------- helpers ----------
 
@@ -248,12 +249,14 @@ init_plugin() {
     pdir="$(get_plugin_dir)/$name"
     mkdir -p "$pdir"
     cd "$pdir" || return 1
+    uuid=$(cat /proc/sys/kernel/random/uuid)
 
     cat > manifest.json << EOF
 {
-     "api_version": "0.2.0",
+     "api_version": "0.2.1",
      "plugin_version": "1.0",
      "name": "$name",
+     "uuid": "$uuid",
      "api_request": [
 
      ],
@@ -369,6 +372,7 @@ Available commands:
   start-daemon                 - Start the background Just Enough Shell daemon
   reload-daemon                - Restart the daemon (apply UI code changes)
   stop-daemon                  - Fully stop the shell execution
+  ping                         - test runtime qs
 
   wallShader <name>            - Set the specified shader for live wallpapers
   toggleWallPicker             - Open/close the wallpaper picker menu
@@ -381,7 +385,7 @@ Available commands:
   toggleLaunch                 - Toggle the application launcher menu visibility
   toggleMap                    - Toggle the mini-map overlay visibility
   toggleJwindow                - Toggle the adaptive for content JES window visibility
-  LockScreen                   - Enable JES lockscreen
+  lockScreen                   - Enable JES lockscreen
 
   screenpicker                 - Trigger the screenshot utility tool
 
@@ -438,6 +442,7 @@ if [ $# -gt 0 ]; then
         screenpicker)     screenpicker ;;
         getLog)           getLog ;;
         editConf)         edit_config ;;
+        ping)             ping ;;
 
         play-pause)       exec "$MUSIC_SCRIPT" play-pause ;;
         next)             exec "$MUSIC_SCRIPT" next ;;

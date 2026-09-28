@@ -135,9 +135,10 @@ Item {
 - To connect to JES the plugin must have a `manifest.json`; below is the maximum basic variant for JES without third-party extensions:
 ```json
 {
-  "api_version": "0.2.0",
+  "api_version": "0.2.1",
   "plugin_version": "1.0",
   "name": "plugin name",
+  "uuid": "uuidv4-here",
   "api_request": [
     "api_extending",
     "launcher",
@@ -164,27 +165,25 @@ Item {
 - To activate a plugin in `config.toml` in `~/.config/JES/` add the following:
 ```toml
 [[plugin]]
-name = "plugin name" # data in property name from manifest.json
+name = "plugin name" # data in property name from manifest.json, also `jes-cli getPlugin` show it
+uuid = "uuidv4-here" # data in property uuid from manifest.json, also `jes-cli getPlugin` show it
 active = true
 ```
 
 - You can also specify your own parameters below in the same toml block, listing their names in the JSON list `required_settings`.
 - To receive the data use the following QML connection:
 ```qml
-Item {
-    id: confParameters
-
-    // JES will put values from the [[plugin]] block of config.toml here
-    property var requiredSettings: ({})
-
-    readonly property int      numbers:      requiredSettings["numbers"]      ?? 3
-    readonly property bool     enabled:      requiredSettings["enabled"]      ?? false
-    readonly property real     float:        requiredSettings["float"]        ?? 1.0
-    readonly property string   text:         requiredSettings["text"]         ?? "hi"
-
-    // Debug
-    onRequiredSettingsChanged: {
-        console.log("[myplugin] settings:", JSON.stringify(requiredSettings))
+FileView {
+    id: paramsFile
+    path: Qt.resolvedUrl("./settings.json")
+    watchChanges: true
+    onFileChanged: reload()
+    JsonAdapter {
+        id: params
+        property string text
+        property int    numbers
+        property bool   enabled
+        property real   float
     }
 }
 ```
@@ -197,6 +196,7 @@ Item {
 ```toml
 [[plugin]]
 name = "myplugin"
+uuid = "uuidv4-from-manifest"
 active = true
 numbers = 5
 enabled = true

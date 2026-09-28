@@ -31,16 +31,6 @@ BaseBar {
             kbLayout = typeof data === 'string' ? data : ""
         }
     }
-
-    JsonListen {
-        id: batteryStream
-        command: localPath(Qt.resolvedUrl("../scripts/battery.sh"))
-        debug: false
-        
-        onDataChanged: {
-            batteryData = data
-        }
-    }   
     
     function changeWorkspace(id) {
         Quickshell.execDetached(["niri", "msg", "action", "focus-workspace", id.toString()])

@@ -47,7 +47,7 @@ if [[ "${1:-}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     CMD="${2:-build}"
     CMD_EXTRA="${3:-}"
 else
-    HOST_VERSION="${JES_HOST_VERSION:-0.2.0}"
+    HOST_VERSION="${JES_HOST_VERSION:-0.2.1}"
     CMD="${1:-build}"
     CMD_EXTRA="${2:-}"
 fi
@@ -58,21 +58,50 @@ if ! command -v jq &>/dev/null; then
 fi
 
 # =====================================================================
+#  Identity helpers
+# =====================================================================
+
+# getPlugin <manifest_path>
+# Возвращает uuid из manifest.json, либо name как fallback.
+getPlugin() {
+    local manifest="$1"
+    local uuid
+    uuid=$(jq -r '.uuid // ""' "$manifest" 2>/dev/null)
+    if [[ -n "$uuid" && "$uuid" != "null" ]]; then
+        printf '%s' "$uuid"
+    else
+        jq -r '.name // ""' "$manifest" 2>/dev/null
+    fi
+}
+
+# getPluginName <manifest_path>
+getPluginName() {
+    local manifest="$1"
+    jq -r '.name // ""' "$manifest" 2>/dev/null
+}
+
+# =====================================================================
 #  Хелперы
 # =====================================================================
 
+# get_plugin_state <search>
+# search — uuid или name; ищем по обоим полям [[plugin]]-блока.
 get_plugin_state() {
-    local name="$1"
-    awk -v n="$name" '
+    local search="$1"
+    awk -v n="$search" '
         BEGIN { state = "unset"; found = 0 }
         /^[[:space:]]*\[\[plugin\]\]/ { in_plugin = 1; cur_matched = 0; next }
         /^[[:space:]]*\[/ && !/^[[:space:]]*\[\[plugin\]\]/ { in_plugin = 0 }
-        in_plugin && /^[[:space:]]*name[[:space:]]*=/ {
-            val = $0; sub(/^[[:space:]]*name[[:space:]]*=[[:space:]]*/, "", val); gsub(/^"|"$/, "", val)
+        in_plugin && /^[[:space:]]*(name|uuid)[[:space:]]*=/ {
+            val = $0
+            sub(/^[[:space:]]*(name|uuid)[[:space:]]*=[[:space:]]*/, "", val)
+            gsub(/^"|"$/, "", val)
             if (val == n) { cur_matched = 1; found = 1 }
         }
         in_plugin && cur_matched && /^[[:space:]]*active[[:space:]]*=/ {
-            val = $0; sub(/^[[:space:]]*active[[:space:]]*=[[:space:]]*/, "", val); gsub(/^"|"$/, "", val)
+            val = $0
+            sub(/^[[:space:]]*active[[:space:]]*=[[:space:]]*/, "", val)
+            gsub(/^"|"$/, "", val)
             state = tolower(val) == "true" ? "true" : "false"
         }
         END {
@@ -82,25 +111,27 @@ get_plugin_state() {
     ' "$CONFIG_FILE" | tr -d '\n\r'
 }
 
-# Возвращает JSON-объект со всеми кастомными ключами из [[plugin]] блока
-# (кроме name и active). Пустой объект если ключей нет.
+# get_plugin_config_json <search>  — search может быть uuid или name.
+# Возвращает JSON-объект со всеми кастомными ключами из [[plugin]]-блока
+# (кроме name, uuid, active). Пустой объект если ключей нет.
 get_plugin_config_json() {
-    local name="$1"
+    local search="$1"
     if [[ "$CONFIG_JSON" == "{}" ]]; then
         echo "{}"
         return
     fi
-    echo "$CONFIG_JSON" | jq -c --arg n "$name" '
+    echo "$CONFIG_JSON" | jq -c --arg n "$search" '
         (.plugin // [])
-        | map(select(.name == $n))[0] // {}
-        | del(.name, .active)
+        | map(select(.name == $n or .uuid == $n))[0] // {}
+        | del(.name, .uuid, .active)
     ' 2>/dev/null || echo "{}"
 }
 
 is_blacklisted() {
-    local name="$1"
+    local ident="$1"
+    [[ -z "$ident" ]] && return 1
     [[ ! -f "$BLACKLIST_FILE" ]] && return 1
-    grep -qxF "$name" "$BLACKLIST_FILE"
+    grep -qxF "$ident" "$BLACKLIST_FILE"
 }
 
 check_compatibility() {
@@ -148,9 +179,11 @@ _each_cached_manifest() {
     find "$CACHE_DIR" -maxdepth 2 -type f -name "manifest.json" 2>/dev/null | sort
 }
 
+# _write_plugin_settings <uuid> <name> <dest_dir>
 _write_plugin_settings() {
-    local name="$1"
-    local dest_dir="$2"
+    local uuid="$1"
+    local name="$2"
+    local dest_dir="$3"
     local manifest="$dest_dir/manifest.json"
 
     [[ ! -f "$manifest" ]] && return 0
@@ -160,7 +193,11 @@ _write_plugin_settings() {
         "$manifest" 2>/dev/null)
     [[ -z "$reqset" || "$reqset" == "null" ]] && reqset="[]"
 
-    pcfg=$(get_plugin_config_json "$name")
+    # сначала пробуем по uuid, потом по name (обратная совместимость)
+    pcfg=$(get_plugin_config_json "$uuid")
+    if [[ "$pcfg" == "{}" && "$uuid" != "$name" ]]; then
+        pcfg=$(get_plugin_config_json "$name")
+    fi
     [[ -z "$pcfg" || "$pcfg" == "null" ]] && pcfg="{}"
 
     settings=$(jq -nc \
@@ -197,23 +234,25 @@ cache_plugins() {
     rm -rf "$CACHE_DIR"
     mkdir -p "$CACHE_DIR"
 
-    # 1. Обычные папки с manifest.json
-    local manifest pname src_dir
+    # 1. Обычные папки с manifest.json — кешируем по uuid
+    local manifest pname puuid src_dir
     while IFS= read -r -d '' manifest; do
-        pname=$(jq -r '.name' "$manifest" 2>/dev/null)
+        pname=$(getPluginName "$manifest")
         [[ -z "$pname" || "$pname" == "null" ]] && continue
+        puuid=$(getPlugin "$manifest")
+        [[ -z "$puuid" ]] && continue
 
         src_dir=$(dirname "$manifest")
-        cp -al "$src_dir" "$CACHE_DIR/$pname" 2>/dev/null \
-            || cp -a "$src_dir" "$CACHE_DIR/$pname"
+        cp -al "$src_dir" "$CACHE_DIR/$puuid" 2>/dev/null \
+            || cp -a "$src_dir" "$CACHE_DIR/$puuid"
 
-        rm -f "$CACHE_DIR/$pname/.jes_from_bundle"
-        touch "$CACHE_DIR/$pname/.jes_from_folder"
-        _write_plugin_settings "$pname" "$CACHE_DIR/$pname"
+        rm -f "$CACHE_DIR/$puuid/.jes_from_bundle"
+        touch "$CACHE_DIR/$puuid/.jes_from_folder"
+        _write_plugin_settings "$puuid" "$pname" "$CACHE_DIR/$puuid"
     done < <(find "$DIR" -type f -name "manifest.json" -print0)
 
-    # 2. Архивы .jes.pb
-    local archive pname2 tmp_dir
+    # 2. Архивы .jes.pb — тоже по uuid из внутреннего manifest.json
+    local archive tmp_dir manifest_path pname2 puuid2 manifest_dir
     while IFS= read -r -d '' archive; do
         pname2="$(basename "$archive" .jes.pb)"
 
@@ -224,28 +263,32 @@ cache_plugins() {
             continue
         fi
 
-        rm -rf "$CACHE_DIR/$pname2"
-        mkdir -p "$CACHE_DIR/$pname2"
-
+        manifest_path=""
         if [[ -f "$tmp_dir/manifest.json" ]]; then
-            cp -a "$tmp_dir/." "$CACHE_DIR/$pname2/"
-        elif [[ -d "$tmp_dir/$pname2" && -f "$tmp_dir/$pname2/manifest.json" ]]; then
-            cp -a "$tmp_dir/$pname2/." "$CACHE_DIR/$pname2/"
+            manifest_path="$tmp_dir/manifest.json"
+        elif [[ -f "$tmp_dir/$pname2/manifest.json" ]]; then
+            manifest_path="$tmp_dir/$pname2/manifest.json"
         else
-            local found_manifest
-            found_manifest=$(find "$tmp_dir" -name manifest.json -type f | head -1)
-            if [[ -n "$found_manifest" ]]; then
-                cp -a "$(dirname "$found_manifest")/." "$CACHE_DIR/$pname2/"
-            else
-                echo "[cache] no manifest.json inside: $archive" >&2
-                rm -rf "$tmp_dir" "$CACHE_DIR/$pname2"
-                continue
-            fi
+            manifest_path=$(find "$tmp_dir" -name manifest.json -type f | head -1)
         fi
 
-        rm -f "$CACHE_DIR/$pname2/.jes_from_folder"
-        touch "$CACHE_DIR/$pname2/.jes_from_bundle"
-        _write_plugin_settings "$pname2" "$CACHE_DIR/$pname2"
+        if [[ -z "$manifest_path" ]]; then
+            echo "[cache] no manifest.json inside: $archive" >&2
+            rm -rf "$tmp_dir"
+            continue
+        fi
+
+        puuid2=$(getPlugin "$manifest_path")
+        pname2=$(getPluginName "$manifest_path")
+        manifest_dir=$(dirname "$manifest_path")
+
+        rm -rf "$CACHE_DIR/$puuid2"
+        mkdir -p "$CACHE_DIR/$puuid2"
+        cp -a "$manifest_dir/." "$CACHE_DIR/$puuid2/"
+
+        rm -f "$CACHE_DIR/$puuid2/.jes_from_folder"
+        touch "$CACHE_DIR/$puuid2/.jes_from_bundle"
+        _write_plugin_settings "$puuid2" "$pname2" "$CACHE_DIR/$puuid2"
 
         rm -rf "$tmp_dir"
     done < <(find "$DIR" -maxdepth 1 -type f -name "*.jes.pb" -print0)
@@ -265,14 +308,24 @@ clear_plugin_cache() {
 
 _plugin_entry_json() {
     local manifest="$1" host="$2"
-    local pname pver active warning compat_out compat_code api_ext
-    local pdir cfg_state status
+    local pname puuid pver active warning compat_out compat_code api_ext
+    local pdir cfg_state status uuid_warning raw_uuid
 
-    pname=$(jq -r '.name' "$manifest" 2>/dev/null)
+    pname=$(getPluginName "$manifest")
     [[ -z "$pname" || "$pname" == "null" ]] && return 1
 
     pver=$(jq -r '.api_version' "$manifest" 2>/dev/null)
     [[ -z "$pver" || "$pver" == "null" ]] && return 1
+
+    # --- identity: uuid, fallback на name ---
+    raw_uuid=$(jq -r '.uuid // ""' "$manifest" 2>/dev/null)
+    puuid=$(getPlugin "$manifest")
+    [[ -z "$puuid" ]] && return 1
+
+    uuid_warning=""
+    if [[ -z "$raw_uuid" || "$raw_uuid" == "null" ]]; then
+        uuid_warning="plugin has no uuid, falling back to name"
+    fi
 
     pdir=$(dirname "$manifest")
 
@@ -283,6 +336,14 @@ _plugin_entry_json() {
         warning="${compat_out#COMPATIBLE:}"
     else
         warning="${compat_out#INCOMPATIBLE:}"
+    fi
+
+    if [[ -n "$uuid_warning" ]]; then
+        if [[ -n "$warning" ]]; then
+            warning="$uuid_warning; $warning"
+        else
+            warning="$uuid_warning"
+        fi
     fi
 
     api_ext=$(jq -r '
@@ -299,10 +360,13 @@ _plugin_entry_json() {
         fi
     fi
 
-    # --- Статус ---
-    cfg_state=$(get_plugin_state "$pname")
+    # --- Статус: сначала по uuid, потом по name (обратная совместимость) ---
+    cfg_state=$(get_plugin_state "$puuid")
+    if [[ "$cfg_state" == "unset" && "$puuid" != "$pname" ]]; then
+        cfg_state=$(get_plugin_state "$pname")
+    fi
 
-    if is_blacklisted "$pname"; then
+    if is_blacklisted "$puuid" || { [[ "$puuid" != "$pname" ]] && is_blacklisted "$pname"; }; then
         status="broken"
         if [[ -n "$warning" ]]; then
             warning="$warning; plugin offed JES, it's moved in black register"
@@ -334,7 +398,11 @@ _plugin_entry_json() {
     json_files=$(jq -c '.json_files // {}' "$manifest" 2>/dev/null)
     icon=$(jq -r '.icon // "󰈔"' "$manifest" 2>/dev/null)
     reqset=$(jq -c '.required_settings // [] | if type == "array" then . else [] end' "$manifest" 2>/dev/null)
-    pcfg=$(get_plugin_config_json "$pname")
+
+    pcfg=$(get_plugin_config_json "$puuid")
+    if [[ "$pcfg" == "{}" && "$puuid" != "$pname" ]]; then
+        pcfg=$(get_plugin_config_json "$pname")
+    fi
 
     [[ -z "$apireq"     || "$apireq"     == "null" ]] && apireq="[]"
     [[ -z "$json_files" || "$json_files" == "null" ]] && json_files="{}"
@@ -344,19 +412,20 @@ _plugin_entry_json() {
 
     jq -nc \
         --arg     name  "$pname" \
+        --arg     uuid  "$puuid" \
         --arg     ver   "$pver" \
         --argjson active "$active" \
         --arg     stat  "$status" \
         --arg     warn  "$warning" \
-        --arg     src   "$CACHE_DIR/$pname" \
+        --arg     src   "$CACHE_DIR/$puuid" \
         --arg     main  "$main_src" \
         --argjson apireq "$apireq" \
         --argjson jsonf  "$json_files" \
         --arg     icon  "$icon" \
         --argjson reqset "$reqset" \
         --argjson pcfg   "$pcfg" \
-        '{name:$name, api_version:$ver, active:$active, status:$stat, warning:$warn,
-          source:$src, main_source:$main, api_request:$apireq,
+        '{name:$name, uuid:$uuid, api_version:$ver, active:$active, status:$stat,
+          warning:$warn, source:$src, main_source:$main, api_request:$apireq,
           json_files:$jsonf, icon:$icon, required_settings:$reqset,
           plugin_config:$pcfg}'
 }
@@ -386,14 +455,14 @@ list_plugins_info() {
         C_BROKEN=$'\033[31m'
     fi
 
-    printf "%-26s %-14s %s\n" "NAME" "STATUS" "WARNING"
-    printf "%-26s %-14s %s\n" "----" "------" "-------"
+    printf "%-26s %-38s %-14s %s\n" "NAME" "UUID" "STATUS" "WARNING"
+    printf "%-26s %-38s %-14s %s\n" "----" "----" "------" "-------"
 
-    local st_color padded
+    local st_color padded pname puuid status warning
     while IFS= read -r manifest; do
         entry=$(_plugin_entry_json "$manifest" "$host") || continue
-        local pname status warning
         pname=$(jq -r '.name'    <<<"$entry")
+        puuid=$(jq -r '.uuid'    <<<"$entry")
         status=$(jq -r '.status'  <<<"$entry")
         warning=$(jq -r '.warning' <<<"$entry")
         [[ -z "$warning" ]] && warning="—"
@@ -407,7 +476,7 @@ list_plugins_info() {
         esac
 
         padded=$(printf "%-14s" "$status")
-        printf "%-26s %s%s%s %s\n" "$pname" "$st_color" "$padded" "$C_RESET" "$warning"
+        printf "%-26s %-38s %s%s%s %s\n" "$pname" "$puuid" "$st_color" "$padded" "$C_RESET" "$warning"
     done < <(_each_cached_manifest)
 }
 
@@ -464,7 +533,7 @@ Usage: $0 [version] [command] [extra]
 
 Commands:
   build [--force]  (default) — build JSON + refresh cache + run launchers
-  list                       — table: name, status, warning
+  list                       — table: name, uuid, status, warning
   list-json                  — same, but JSON
   cache                      — force rebuild cache only
   clear                      — wipe cache
@@ -474,6 +543,10 @@ Status:
   disabled      — registered but active=false (or blocked by enableFolders=false)
   unregistered  — not listed in config.toml
   broken        — incompatible, or blacklisted (crashed UI)
+
+Identity:
+  uuid is the primary plugin key. If manifest.json has no "uuid" field,
+  plugin_list.sh falls back to "name" and notes it in the WARNING column.
 
 Config:
   [settings] enableFolders = true|false   (default: true)
