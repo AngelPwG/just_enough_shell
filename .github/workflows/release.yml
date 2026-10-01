@@ -48,7 +48,6 @@ jobs:
           install -Dm755 dist/network          "$ROOT/usr/share/jes/quickshell/scripts/network"
           install -Dm755 dist/bluetooth        "$ROOT/usr/share/jes/quickshell/scripts/bluetooth"
 
-          # CoreAura daemon
           install -Dm755 dist/CoreAura "$ROOT/usr/share/jes/quickshell/CoreAura/CoreAura"
 
           mkdir -p "$ROOT/etc/jes"
@@ -176,7 +175,9 @@ jobs:
           mkdir -p rpmbuild-alt/{SOURCES,SPECS}
           cp packaging/alt/jes-shell.spec rpmbuild-alt/SPECS/
           sed -i "s/^Version:.*/Version: $V/" rpmbuild-alt/SPECS/jes-shell.spec
-          tar czf "rpmbuild-alt/SOURCES/jes-shell-$V.tar" --exclude=.git --exclude=rpmbuild-alt .
+          tar czf "rpmbuild-alt/SOURCES/jes-shell-$V.tar.gz" \
+            --exclude=.git --exclude=rpmbuild-alt --exclude=rpmbuild-fc \
+            --transform "s,^\.,jes-shell-$V," .
           docker run --rm -v "$PWD:/src" -w /src alt:sisyphus bash -c '
             apt-get update &&
             apt-get install -y rpm-build golang util-linux systemd &&
@@ -196,7 +197,9 @@ jobs:
           mkdir -p rpmbuild-fc/{SOURCES,SPECS}
           cp packaging/fedora/jes.spec rpmbuild-fc/SPECS/
           sed -i "s/^Version:.*/Version: $V/" rpmbuild-fc/SPECS/jes.spec
-          tar czf "rpmbuild-fc/SOURCES/jes-shell-$V.tar.gz" --exclude=.git --exclude=rpmbuild-alt --exclude=rpmbuild-fc .
+          tar czf "rpmbuild-fc/SOURCES/jes-shell-$V.tar.gz" \
+            --exclude=.git --exclude=rpmbuild-alt --exclude=rpmbuild-fc \
+            --transform "s,^\.,jes-shell-$V," .
           docker run --rm -v "$PWD:/src" -w /src fedora:latest bash -c '
             dnf install -y rpm-build golang systemd-rpm-macros &&
             rpmbuild --define "_topdir /src/rpmbuild-fc" -ba rpmbuild-fc/SPECS/jes.spec &&

@@ -9,6 +9,8 @@ Vcs: https://github.com/ORFLEM/just_enough_shell
 
 BuildRequires: golang
 
+Source0: %name-%version.tar.gz
+
 # runtime-зависимости — сверено с systemPackages в flake.nix
 Requires: quickshell
 Requires: matugen
@@ -19,7 +21,6 @@ Requires: zip unzip
 Requires: kdeconnect
 Requires: micro
 Requires: pipewire wireplumber upower
-Suggests: bluez
 
 # Qt-модули: qs подтягивает только базу, media-модули — только сами.
 # имена проверить под Sisyphus (возможны qt6-* варианты)
