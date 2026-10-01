@@ -60,7 +60,7 @@ install -d %{buildroot}%{_datadir}/jes/quickshell
 cp -r .local/JES/quickshell/* %{buildroot}%{_datadir}/jes/quickshell/
 
 install -Dm755 for-quickshell/go/launch           %{buildroot}%{_datadir}/jes/quickshell/launcher/launch
-install -Dm755 for-quickshell/go/wallpaper-picker %{buildroot}%{_datadir}/jes/quickshell/wallpaper/wallpaper-picker
+install -Dm755 for-quickshell/go/wallpaper/wallpaper-picker %{buildroot}%{_datadir}/jes/quickshell/wallpaper/wallpaper-picker
 install -Dm755 for-quickshell/go/music            %{buildroot}%{_datadir}/jes/quickshell/scripts/music
 install -Dm755 for-quickshell/go/cal              %{buildroot}%{_datadir}/jes/quickshell/scripts/cal
 install -Dm755 for-quickshell/go/Cava-internal    %{buildroot}%{_datadir}/jes/quickshell/scripts/Cava-internal
