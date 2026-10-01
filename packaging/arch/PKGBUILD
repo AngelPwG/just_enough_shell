@@ -180,8 +180,6 @@ EOF
 
     # --- шрифты и обои (FauxHanamin — CJK-глифы, штатно) ---
     install -Dm644 .local/share/fonts/ttf/FauxHanamin.ttf "$pkgdir/usr/share/fonts/TTF/FauxHanamin.ttf"
-    install -d "$pkgdir/usr/share/backgrounds/jes"
-    cp -r .local/share/wallpapers/* "$pkgdir/usr/share/backgrounds/jes/"
 
     # --- systemd user unit (1:1 с flake.nix) ---
     install -d "$pkgdir/usr/lib/systemd/user"

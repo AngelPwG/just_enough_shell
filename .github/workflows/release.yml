@@ -124,8 +124,6 @@ jobs:
           install -Dm644 completions/jes-cli.fish "$ROOT/usr/share/fish/vendor_completions.d/jes-cli.fish"
 
           install -Dm644 .local/share/fonts/ttf/FauxHanamin.ttf "$ROOT/usr/share/fonts/TTF/FauxHanamin.ttf"
-          mkdir -p "$ROOT/usr/share/backgrounds/jes"
-          cp -r .local/share/wallpapers/* "$ROOT/usr/share/backgrounds/jes/"
 
           mkdir -p "$ROOT/usr/lib/systemd/user"
           cat > "$ROOT/usr/lib/systemd/user/jes.service" <<EOF
