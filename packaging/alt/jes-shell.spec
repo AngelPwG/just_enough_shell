@@ -175,12 +175,12 @@ install -Dm644 /dev/stdin %buildroot%_udevrulesdir/99-jes-i2c.rules <<EOF
 SUBSYSTEM=="i2c", KERNEL=="i2c-[0-9]*", TAG+="uaccess"
 EOF
 install -Dm644 /dev/stdin %buildroot%_prefix/lib/tmpfiles.d/jes.conf <<EOF
-d %h/.cache/JES               0755 - - -
-d %h/.cache/JES/walls         0755 - - -
-d %h/.cache/JES/wall_prevs    0755 - - -
-d %h/.cache/JES/jes_music_art 0755 - - -
-d %h/.local/state             0755 - - -
-C %h/.config/JES              0755 - - - %_datadir/jes/config
+d %%h/.cache/JES               0755 - - -
+d %%h/.cache/JES/walls         0755 - - -
+d %%h/.cache/JES/wall_prevs    0755 - - -
+d %%h/.cache/JES/jes_music_art 0755 - - -
+d %%h/.local/state             0755 - - -
+C %%h/.config/JES              0755 - - - %_datadir/jes/config
 EOF
 
 %post_service coreaura

@@ -167,12 +167,12 @@ install -Dm644 /dev/stdin %{buildroot}%{_udevrulesdir}/99-jes-i2c.rules <<EOF
 SUBSYSTEM=="i2c", KERNEL=="i2c-[0-9]*", TAG+="uaccess"
 EOF
 install -Dm644 /dev/stdin %{buildroot}%{_prefix}/lib/tmpfiles.d/jes.conf <<EOF
-d %h/.cache/JES               0755 - - -
-d %h/.cache/JES/walls         0755 - - -
-d %h/.cache/JES/wall_prevs    0755 - - -
-d %h/.cache/JES/jes_music_art 0755 - - -
-d %h/.local/state             0755 - - -
-C %h/.config/JES              0755 - - - %{_datadir}/jes/config
+d %%h/.cache/JES               0755 - - -
+d %%h/.cache/JES/walls         0755 - - -
+d %%h/.cache/JES/wall_prevs    0755 - - -
+d %%h/.cache/JES/jes_music_art 0755 - - -
+d %%h/.local/state             0755 - - -
+C %%h/.config/JES              0755 - - - %{_datadir}/jes/config
 EOF
 
 %post
@@ -196,10 +196,9 @@ EOF
 %{_datadir}/fonts/TTF/FauxHanamin.ttf
 
 %changelog
-* Thu Oct 02 2026 _ORFLEM_ <zenkinzahar@gmail.com> - 02.10.2026-1
+* Thu Oct 02 2026 _ORFLEM_ <zenkinzahar@gmail.com> - 0.4.0-1
 - Add audio/network/bluetooth Go tools.
-- jes-cli new functions
 - Add CoreAura monitoring daemon (system unit, dbus policy, /etc config).
 
-* Mon Sep 29 2026 _ORFLEM_ <zenkinzahar@gmail.com> - 22.09.2026-1
+* Mon Sep 29 2026 _ORFLEM_ <zenkinzahar@gmail.com> - 0.3.0-1
 - Initial package.

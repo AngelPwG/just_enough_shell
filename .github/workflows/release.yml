@@ -183,7 +183,7 @@ jobs:
             apt-get install -y rpm-build golang util-linux systemd &&
             useradd -m builder &&
             chown -R builder:builder /src &&
-            setpriv --reuid builder --regid builder --init-groups bash -c "
+            setpriv --reuid builder --regid builder --init-groups env HOME=/home/builder bash -c "
               rpmbuild --define \"_topdir /src/rpmbuild-alt\" -ba rpmbuild-alt/SPECS/jes-shell.spec &&
               cp rpmbuild-alt/RPMS/*/*.rpm /src/ &&
               cp rpmbuild-alt/SRPMS/*.rpm /src/
