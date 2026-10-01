@@ -180,15 +180,19 @@ jobs:
             --exclude=.local/JES/quickshell/JES \
             --transform "s,^\.,jes-shell-$V," .
           docker run --rm -v "$PWD:/src" -w /src alt:sisyphus bash -c '
+            OWNER=$(stat -c %u:%g /src)
             apt-get update &&
             apt-get install -y rpm-build rpm-build-python3 golang util-linux systemd &&
             useradd -m builder &&
-            chown -R builder:builder /src &&
+            chown -R builder:builder /src || exit 1
             setpriv --reuid builder --regid builder --init-groups env HOME=/home/builder bash -c "
               rpmbuild --define \"_topdir /src/rpmbuild-alt\" -ba rpmbuild-alt/SPECS/jes-shell.spec &&
               cp rpmbuild-alt/RPMS/*/*.rpm /src/ &&
               cp rpmbuild-alt/SRPMS/*.rpm /src/
             "
+            STATUS=$?
+            chown -R "$OWNER" /src
+            exit $STATUS
           '
 
       - name: Build Fedora RPM
