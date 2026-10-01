@@ -61,18 +61,27 @@ go build -trimpath -ldflags="$ldflags" -o CoreAura .
 install -d %buildroot%_datadir/jes/quickshell
 cp -r .local/JES/quickshell/* %buildroot%_datadir/jes/quickshell/
 
-# бинарники
-install -Dm755 for-quickshell/go/launch           %buildroot%_datadir/jes/quickshell/launcher/launch
-install -Dm755 for-quickshell/go/wallpaper/wallpaper-picker %buildroot%_datadir/jes/quickshell/wallpaper/wallpaper-picker
-install -Dm755 for-quickshell/go/music            %buildroot%_datadir/jes/quickshell/scripts/music
-install -Dm755 for-quickshell/go/cal              %buildroot%_datadir/jes/quickshell/scripts/cal
-install -Dm755 for-quickshell/go/Cava-internal    %buildroot%_datadir/jes/quickshell/scripts/Cava-internal
-install -Dm755 for-quickshell/go/screenpicker     %buildroot%_datadir/jes/quickshell/screenpicker/screenpicker
-install -Dm755 for-quickshell/go/audio            %buildroot%_datadir/jes/quickshell/scripts/audio
-install -Dm755 for-quickshell/go/network          %buildroot%_datadir/jes/quickshell/scripts/network
-install -Dm755 for-quickshell/go/bluetooth        %buildroot%_datadir/jes/quickshell/scripts/bluetooth
+# ELF-бинарники — только в разрешённое дерево (%_libdir),
+# в quickshell кладём симлинки (пути для QML/jes-cli не меняются)
+install -d %buildroot%_libdir/jes
+install -Dm755 for-quickshell/go/launch                    %buildroot%_libdir/jes/launch
+install -Dm755 for-quickshell/go/music                     %buildroot%_libdir/jes/music
+install -Dm755 for-quickshell/go/cal                       %buildroot%_libdir/jes/cal
+install -Dm755 for-quickshell/go/Cava-internal             %buildroot%_libdir/jes/Cava-internal
+install -Dm755 for-quickshell/go/screenpicker              %buildroot%_libdir/jes/screenpicker
+install -Dm755 for-quickshell/go/audio                     %buildroot%_libdir/jes/audio
+install -Dm755 for-quickshell/go/network                   %buildroot%_libdir/jes/network
+install -Dm755 for-quickshell/go/bluetooth                 %buildroot%_libdir/jes/bluetooth
+install -Dm755 for-quickshell/go/wallpaper/wallpaper-picker %buildroot%_libdir/jes/wallpaper-picker
+install -Dm755 for-quickshell/go/coreaura/CoreAura         %buildroot%_libdir/jes/CoreAura
 
-install -Dm755 for-quickshell/go/coreaura/CoreAura %buildroot%_datadir/jes/quickshell/CoreAura/CoreAura
+for b in music cal Cava-internal audio network bluetooth; do
+  ln -s %_libdir/jes/$b %buildroot%_datadir/jes/quickshell/scripts/$b
+done
+ln -s %_libdir/jes/launch           %buildroot%_datadir/jes/quickshell/launcher/launch
+ln -s %_libdir/jes/screenpicker     %buildroot%_datadir/jes/quickshell/screenpicker/screenpicker
+ln -s %_libdir/jes/wallpaper-picker %buildroot%_datadir/jes/quickshell/wallpaper/wallpaper-picker
+ln -s %_libdir/jes/CoreAura         %buildroot%_datadir/jes/quickshell/CoreAura/CoreAura
 
 # CoreAura: дефолтный конфиг + system unit + dbus policy
 install -d %buildroot%_sysconfdir/jes
@@ -202,6 +211,7 @@ fi
 
 %files
 %_bindir/jes-cli
+%_libdir/jes
 %_datadir/jes
 %_userunitdir/jes.service
 %_unitdir/coreaura.service
