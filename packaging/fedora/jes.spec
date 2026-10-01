@@ -42,18 +42,18 @@ daemon, plugin system, systemd units and udev rules.
 cd for-quickshell/go
 export GOFLAGS="-mod=vendor"
 ldflags="-s -w -buildid="
-go build -trimpath -ldflags="$ldflags" -o launch         ./cmd/launch
-go build -trimpath -ldflags="$ldflags" -o music          ./cmd/music
-go build -trimpath -ldflags="$ldflags" -o cal            ./cmd/cal
-go build -trimpath -ldflags="$ldflags" -o Cava-internal  ./cmd/cava-internal
-go build -trimpath -ldflags="$ldflags" -o screenpicker   ./cmd/screenpicker
-go build -trimpath -ldflags="$ldflags" -o audio          ./cmd/audio
-go build -trimpath -ldflags="$ldflags" -o network        ./cmd/network
-go build -trimpath -ldflags="$ldflags" -o bluetooth      ./cmd/bluetooth
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o launch         ./cmd/launch
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o music          ./cmd/music
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o cal            ./cmd/cal
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o Cava-internal  ./cmd/cava-internal
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o screenpicker   ./cmd/screenpicker
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o audio          ./cmd/audio
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o network        ./cmd/network
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o bluetooth      ./cmd/bluetooth
 cd wallpaper
-go build -trimpath -ldflags="$ldflags" -o wallpaper-picker .
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o wallpaper-picker .
 cd ../coreaura
-go build -trimpath -ldflags="$ldflags" -o CoreAura .
+go build -buildvcs=false -trimpath -ldflags="$ldflags" -o CoreAura .
 
 %install
 install -d %{buildroot}%{_datadir}/jes/quickshell
@@ -201,9 +201,9 @@ EOF
 %{_datadir}/fonts/TTF/FauxHanamin.ttf
 
 %changelog
-* Thu Oct 02 2026 _ORFLEM_ <zenkinzahar@gmail.com> - 0.4.0-1
+* Fri Oct 02 2026 _ORFLEM_ <zenkinzahar@gmail.com> - 0.4.0-1
 - Add audio/network/bluetooth Go tools.
 - Add CoreAura monitoring daemon (system unit, dbus policy, /etc config).
 
-* Mon Sep 29 2026 _ORFLEM_ <zenkinzahar@gmail.com> - 0.3.0-1
+* Tue Sep 29 2026 _ORFLEM_ <zenkinzahar@gmail.com> - 0.3.0-1
 - Initial package.
