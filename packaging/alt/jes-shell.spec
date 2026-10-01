@@ -183,8 +183,22 @@ d %%h/.local/state             0755 - - -
 C %%h/.config/JES              0755 - - - %_datadir/jes/config
 EOF
 
-%post_service coreaura
-%preun_service coreaura
+%post
+# первичная установка: дать systemd знать о новом юните
+if [ "$1" -eq 1 ] 2>/dev/null; then
+    /bin/systemctl daemon-reload 2>/dev/null || :
+fi
+
+%preun
+# удаление пакета: выключить и остановить демон
+if [ "$1" -eq 0 ] 2>/dev/null; then
+    /bin/systemctl --no-reload disable coreaura.service 2>/dev/null || :
+    /bin/systemctl stop coreaura.service 2>/dev/null || :
+fi
+
+%postun
+# после удаления/обновления: перечитать юниты
+/bin/systemctl daemon-reload 2>/dev/null || :
 
 %files
 %_bindir/jes-cli
