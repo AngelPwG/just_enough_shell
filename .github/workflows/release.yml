@@ -177,10 +177,11 @@ jobs:
           sed -i "s/^Version:.*/Version: $V/" rpmbuild-alt/SPECS/jes-shell.spec
           tar czf "rpmbuild-alt/SOURCES/jes-shell-$V.tar.gz" \
             --exclude=.git --exclude=rpmbuild-alt --exclude=rpmbuild-fc \
+            --exclude=.local/JES/quickshell/JES \
             --transform "s,^\.,jes-shell-$V," .
           docker run --rm -v "$PWD:/src" -w /src alt:sisyphus bash -c '
             apt-get update &&
-            apt-get install -y rpm-build golang util-linux systemd &&
+            apt-get install -y rpm-build rpm-build-python3 golang util-linux systemd &&
             useradd -m builder &&
             chown -R builder:builder /src &&
             setpriv --reuid builder --regid builder --init-groups env HOME=/home/builder bash -c "
@@ -199,6 +200,7 @@ jobs:
           sed -i "s/^Version:.*/Version: $V/" rpmbuild-fc/SPECS/jes.spec
           tar czf "rpmbuild-fc/SOURCES/jes-shell-$V.tar.gz" \
             --exclude=.git --exclude=rpmbuild-alt --exclude=rpmbuild-fc \
+            --exclude=.local/JES/quickshell/JES \
             --transform "s,^\.,jes-shell-$V," .
           docker run --rm -v "$PWD:/src" -w /src fedora:latest bash -c '
             dnf install -y rpm-build golang systemd-rpm-macros &&

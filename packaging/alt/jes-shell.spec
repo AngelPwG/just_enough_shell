@@ -61,6 +61,11 @@ go build -trimpath -ldflags="$ldflags" -o CoreAura .
 install -d %buildroot%_datadir/jes/quickshell
 cp -r .local/JES/quickshell/* %buildroot%_datadir/jes/quickshell/
 
+# внутренние симлинки QML (в тарболе их нет — %transform ломал таргеты)
+install -d %buildroot%_datadir/jes/quickshell/JES
+ln -s ../bar     %buildroot%_datadir/jes/quickshell/JES/Bar
+ln -s ../helpers %buildroot%_datadir/jes/quickshell/JES/Helpers
+
 # ELF-бинарники — только в разрешённое дерево (%_libdir),
 # в quickshell кладём симлинки (пути для QML/jes-cli не меняются)
 install -d %buildroot%_libdir/jes
