@@ -240,7 +240,7 @@ WlrLayershell {
                                 color: col.font
                                 MouseArea {
                                     anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["sh", "-c", "~/.config/quickshell/scripts/cal prev_year"])
+                                    onClicked: Quickshell.execDetached(["sh", "-c", localPath(Qt.resolvedUrl("../../scripts/cal prev_year"))])
                                 }
                             }
                             Text {
@@ -250,7 +250,7 @@ WlrLayershell {
                                 color: col.font
                                 MouseArea {
                                     anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["sh", "-c", "~/.config/quickshell/scripts/cal prev"])
+                                    onClicked: Quickshell.execDetached(["sh", "-c", localPath(Qt.resolvedUrl("../../scripts/cal prev"))])
                                 }
                             }
                             Text {
@@ -260,7 +260,7 @@ WlrLayershell {
                                 color: col.font
                                 MouseArea {
                                     anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["sh", "-c", "~/.config/quickshell/scripts/cal today"])
+                                    onClicked: Quickshell.execDetached(["sh", "-c", localPath(Qt.resolvedUrl("../../scripts/cal today"))])
                                 }
                             }
                             Text {
@@ -270,7 +270,7 @@ WlrLayershell {
                                 color: col.font
                                 MouseArea {
                                     anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["sh", "-c", "~/.config/quickshell/scripts/cal next"])
+                                    onClicked: Quickshell.execDetached(["sh", "-c", localPath(Qt.resolvedUrl("../../scripts/cal next"))])
                                 }
                             }
                             Text {
@@ -280,7 +280,7 @@ WlrLayershell {
                                 color: col.font
                                 MouseArea {
                                     anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["sh", "-c", "~/.config/quickshell/scripts/cal next_year"])
+                                    onClicked: Quickshell.execDetached(["sh", "-c", localPath(Qt.resolvedUrl("../../scripts/cal next_year"))])
                                 }
                             }
                         }

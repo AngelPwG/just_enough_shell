@@ -1,0 +1,6 @@
+# vendor — чужой код, GitHub свернёт в диффах и уберёт из статистики
+for-quickshell/go/vendor/** linguist-vendored
+for-quickshell/go/wallpaper/vendor/** linguist-vendored
+
+# Go-артефакты, если вдруг появятся
+**/vendor/** linguist-vendored

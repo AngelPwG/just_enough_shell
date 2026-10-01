@@ -29,6 +29,25 @@
   <br>
 	Проект имеет простую систему плагинов, что делает его расширяемым.<br>
 	<br>
+	<b>Модули JES:</b>
+	<ul>
+	<li>Панель управления (bar) с компонентной системой виджетов</li>
+	<li>Лаунчер приложений</li>
+	<li>Выбор обоев (wallpaper picker) и встроенный wallpaper engine со шейдерами</li>
+	<li>Медиапроигрыватель с эквалайзером cava</li>
+	<li>Календарь</li>
+	<li>Меню питания</li>
+	<li>Мини-карта (map)</li>
+	<li>Jwindow — адаптивное окно под контент</li>
+	<li>Блокировка экрана</li>
+	<li>Popup громкости и яркости</li>
+	<li>Screen picker — утилита скриншотов</li>
+	<li>Виджет погоды</li>
+	<li>Система плагинов (формат .jes.pb) с API plugin center</li>
+	<li>jes-cli — управление шеллом из терминала</li>
+	<li>CoreAura — системный демон мониторинга (ошибки ядра, падения сервисов, нагрузка)</li>
+	</ul>
+	<br>
 	<i>JES</i> проектировался под стационарные пк, из-за чего бывают архитектурные проблемы с ноутбуками.<br>
 	Проверенные разрешения: FHD (1920x1080) и выше.<br>
 	На них панель не имеет проблем с расположением модулей.<br>
@@ -79,7 +98,7 @@
 ## -- ВАЖНО -- :
 - Все тесты производительности производились на r7 5700x и r5 3600, на обоих ЦП процент был одинаков: 1-2%, но лучше уточнать через ии или сайты сравнения мощность своего цп для понимания приблизительной нагрузки
 - Nvidia видеокарты работают УЖАСНО, **всё моментально может завсинусть из-за ничего**, автор не собирается этот вопрос решать, так как это **пробелмы на стороне драйверов**!
-- Автор не имеет опыта работы с Arch Linux, установка на Arch может быть неккоректной, если так и есть, просьба описать проблему в Issue, а по возможности предложить фикс
+- Поддержка Arch Linux осуществляется через PKGBUILD (см. раздел установки); при проблемах с пакетом опишите их в Issue, а по возможности предложите фикс — pull request'ы с поддержкой дистрибутивов приветствуются
 - Установка находится в самом низу
 - Автор открыт к предложениям и помогает с освоением проекта, в случае проблем, писать в [Issue](https://github.com/ORFLEM/just_enough_shell/issues/new)
 - Автор будет благодарен за помощь с поддержкой других дистрибутивов и сразу примет новые pull requests с указанием автора, сделавший поддержку, востребованны такие, как void linux, alt linux и debian.
@@ -194,20 +213,39 @@
 ```nix
 programs.jes = {
   enable = true;
-  # autoStart = true; # default - false
+  # autoStart = true;  # default - false
+  # coreAura.enable = true;  # системный демон CoreAura (опционально)
 };
 ```
 - пересоберите NixOS
 
-### Arch Linux или Arch based (может быть неккоректной, в случае проблем, писать в [Issue](https://github.com/ORFLEM/just_enough_shell/issues/new))
-- Установите Arch Linux (для простоты советую EndeavourOS)
-<!-- - Запустите установщик (не переработан): -->
-<!-- ```bash -->
-<!-- git clone https://github.com/ORFLEM/just_enough_shell.git && cd just_enough_shell && ./install_arch.sh -->
-<!-- ``` -->
+### Arch Linux / AUR
+```
+yay -S jes-shell-git
+```
+или вручную из репозитория:
+```bash
+git clone https://github.com/ORFLEM/just_enough_shell.git
+cd just_enough_shell/packaging/arch
+makepkg -si
+```
 
-<!-- - В случае ошибок устанавливайсте вручную: -->
-- Установка доступна только ручная, автоматическая сломана:
+### Fedora
+Готовые RPM (и SRPM) публикуются в [GitHub Releases](https://github.com/ORFLEM/just_enough_shell/releases) для каждого тега.
+Сборка из исходников: `packaging/fedora/jes.spec`.
+
+### ALT Linux
+Спек для Sisyphus: `packaging/alt/jes-shell.spec`.
+
+### Debian / Ubuntu
+Готовый `.deb` публикуется в [GitHub Releases](https://github.com/ORFLEM/just_enough_shell/releases) для каждого тега.
+
+### После установки (все дистрибутивы, кроме NixOS)
+- запуск: `jes-cli start-daemon`
+- автозапуск: `systemctl --user enable --now jes`
+- демон CoreAura (мониторинг состояния ПК, опционально): `sudo systemctl enable --now coreaura`
+
+### Ручная установка на Arch (резервный вариант)
 ```
 1. Установите Arch Linux (для простоты советую EndeavourOS)
 2. Установите yay или paru (yay: git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si)

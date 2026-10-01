@@ -10,6 +10,22 @@ Item {
     property var lbat: ({})
     property bool showConnect: false
     property string oldname: "null"
+    property var audio: ({})
+    property var network: ({})
+    property var bluetooth: ({})
+    // аудио — мгновенные обновления через pactl subscribe
+    JsonListen {
+        command: localPath(Qt.resolvedUrl("scripts/audio")) + " listen";
+        onDataChanged: audio = data
+    }
+    JsonListen {
+        command: localPath(Qt.resolvedUrl("scripts/network")) + " listen";
+        onDataChanged: network = data
+    }
+    JsonListen {
+        command: localPath(Qt.resolvedUrl("scripts/bluetooth")) + " listen";
+        onDataChanged: bluetooth = data
+    }
 
     JsonListen {
         command: localPath(Qt.resolvedUrl("scripts/vol.sh"))

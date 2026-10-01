@@ -1,0 +1,28 @@
+# Go build outputs — собираются из for-quickshell/go
+.local/JES/quickshell/launcher/launch
+.local/JES/quickshell/wallpaper/wallpaper-picker
+.local/JES/quickshell/scripts/music
+.local/JES/quickshell/scripts/cal
+.local/JES/quickshell/scripts/audio
+.local/JES/quickshell/scripts/network
+.local/JES/quickshell/scripts/bluetooth
+.local/JES/quickshell/scripts/Cava-internal
+.local/JES/quickshell/screenpicker/screenpicker
+.local/JES/quickshell/CoreAura/CoreAura
+
+# страховка от сборки «не туда»
+**/quickshell/launcher/launch
+**/quickshell/wallpaper/wallpaper-picker
+**/quickshell/scripts/music
+**/quickshell/scripts/cal
+**/quickshell/scripts/audio
+**/quickshell/scripts/network
+**/quickshell/scripts/bluetooth
+**/quickshell/scripts/Cava-internal
+**/quickshell/screenpicker/screenpicker
+**/quickshell/CoreAura/CoreAura
+
+# Go-мусор, если появится
+*.test
+*.out
+/coverage.*

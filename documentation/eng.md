@@ -29,6 +29,25 @@
   <br>
 	The project has a simple plugin system, making it extensible.<br>
 	<br>
+	<b>JES modules:</b>
+	<ul>
+	<li>Control panel (bar) with a component-based widget system</li>
+	<li>Application launcher</li>
+	<li>Wallpaper picker and built-in wallpaper engine with shaders</li>
+	<li>Media player with cava equalizer</li>
+	<li>Calendar</li>
+	<li>Power menu</li>
+	<li>Mini-map</li>
+	<li>Jwindow — content-adaptive window</li>
+	<li>Lock screen</li>
+	<li>Volume and brightness popup</li>
+	<li>Screen picker — screenshot utility</li>
+	<li>Weather widget</li>
+	<li>Plugin system (.jes.pb format) with plugin center API</li>
+	<li>jes-cli — shell management from the terminal</li>
+	<li>CoreAura — system monitoring daemon (kernel errors, service crashes, load)</li>
+	</ul>
+	<br>
 	<i>JES</i> was designed for desktop PCs, which is why there can be architectural issues with laptops.<br>
 	Verified resolutions: FHD (1920×1080) and higher.<br>
 	On these the panel has no issues with module placement.<br>
@@ -79,7 +98,7 @@ View past completed tasks — [complited.md (eng only)](./complited.md)
 ## -- IMPORTANT -- :
 - All performance tests were conducted on r7 5700x and r5 3600; on both CPUs the percentage was the same: 1–2%, but it's better to check via AI or comparison sites for your CPU to understand approximate load.
 - Nvidia graphics cards work TERRIBLY, **everything can freeze instantly for no reason**, the author is not going to solve this because it is a **driver-side problem**!
-- The author has no experience with Arch Linux; installation on Arch may be incorrect, if so please describe the issue in an Issue and if possible suggest a fix.
+- Arch Linux support is provided via a PKGBUILD (see the installation section); if you have problems with the package, please describe them in an Issue and, if possible, suggest a fix — pull requests adding distribution support are welcome.
 - Installation instructions are at the very bottom.
 - The author is open to suggestions and helps with project onboarding; in case of problems, write to [Issue](https://github.com/ORFLEM/just_enough_shell/issues/new).
 - The author will be grateful for help with supporting other distributions and will immediately accept new pull requests indicating the author who added support; void linux, alt linux and debian are in demand.
@@ -194,20 +213,39 @@ In jes-cli, micro is used for config editing; to exit use Ctrl+Q, and to save �
 ```nix
 programs.jes = {
   enable = true;
-  # autoStart = true; # default - false
+  # autoStart = true;  # default - false
+  # coreAura.enable = true;  # CoreAura system daemon (optional)
 };
 ```
 - rebuild NixOS
 
-### Arch Linux or Arch based (may be incorrect; in case of problems, write to [Issue](https://github.com/ORFLEM/just_enough_shell/issues/new))
-- Install Arch Linux (for simplicity I recommend EndeavourOS)
-<!-- - Run the installer (not reworked): -->
-<!-- ```bash -->
-<!-- git clone https://github.com/ORFLEM/just_enough_shell.git && cd just_enough_shell && ./install_arch.sh -->
-<!-- ``` -->
+### Arch Linux / AUR
+```
+yay -S jes-shell-git
+```
+or manually from the repository:
+```bash
+git clone https://github.com/ORFLEM/just_enough_shell.git
+cd just_enough_shell/packaging/arch
+makepkg -si
+```
 
-<!-- - In case of errors install manually: -->
-- Installation is manual only, automatic is broken:
+### Fedora
+Ready-made RPMs (and SRPMs) are published on [GitHub Releases](https://github.com/ORFLEM/just_enough_shell/releases) for every tag.
+Building from source: `packaging/fedora/jes.spec`.
+
+### ALT Linux
+Sisyphus spec: `packaging/alt/jes-shell.spec`.
+
+### Debian / Ubuntu
+A ready `.deb` is published on [GitHub Releases](https://github.com/ORFLEM/just_enough_shell/releases) for every tag.
+
+### After installation (all distributions except NixOS)
+- start: `jes-cli start-daemon`
+- autostart: `systemctl --user enable --now jes`
+- CoreAura daemon (PC state monitoring, optional): `sudo systemctl enable --now coreaura`
+
+### Manual installation on Arch (fallback)
 ```
 1. Install Arch Linux (for simplicity I recommend EndeavourOS)
 2. Install yay or paru (yay: git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si)

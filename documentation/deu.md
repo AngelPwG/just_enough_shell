@@ -29,6 +29,25 @@
   <br>
 	Das Projekt hat ein einfaches Plugin-System, das es erweiterbar macht.<br>
 	<br>
+	<b>JES-Module:</b>
+	<ul>
+	<li>Steuerleiste (bar) mit komponentenbasiertem Widget-System</li>
+	<li>Anwendungsstarter</li>
+	<li>Hintergrundbildauswahl und eingebaute Wallpaper-Engine mit Shadern</li>
+	<li>Mediaplayer mit Cava-Equalizer</li>
+	<li>Kalender</li>
+	<li>Power-Menü</li>
+	<li>Mini-Map</li>
+	<li>Jwindow — inhaltlich adaptives Fenster</li>
+	<li>Sperrbildschirm</li>
+	<li>Popup für Lautstärke und Helligkeit</li>
+	<li>Screen Picker — Screenshot-Dienstprogramm</li>
+	<li>Wetter-Widget</li>
+	<li>Plugin-System (Format .jes.pb) mit Plugin-Center-API</li>
+	<li>jes-cli — Shell-Verwaltung vom Terminal aus</li>
+	<li>CoreAura — Systemüberwachungs-Daemon (Kernel-Fehler, Service-Abstürze, Last)</li>
+	</ul>
+	<br>
 	<i>JES</i> wurde für Desktop-PCs entwickelt, weshalb es bei Laptops zu architektonischen Problemen kommen kann.<br>
 	Verifizierte Auflösungen: FHD (1920×1080) und höher.<br>
 	Bei diesen hat die Leiste keine Probleme mit der Platzierung der Module.<br>
@@ -79,7 +98,7 @@ Vergangene abgeschlossene Aufgaben ansehen — [complited.md (nur englisch)](./c
 ## -- WICHTIG -- :
 - Alle Performance-Tests wurden auf r7 5700x und r5 3600 durchgeführt; auf beiden CPUs war der Prozentsatz gleich: 1–2 %, aber es ist besser, über KI oder Vergleichsseiten die Leistung der eigenen CPU zu prüfen, um die ungefähre Last zu verstehen.
 - Nvidia-Grafikkarten funktionieren SCHRECKLICH, **alles kann sofort ohne Grund einfrieren**, der Autor wird dieses Problem nicht lösen, da es sich um ein **Treiberproblem** handelt!
-- Der Autor hat keine Erfahrung mit Arch Linux; die Installation auf Arch kann fehlerhaft sein, falls ja, bitte das Problem in einem Issue beschreiben und falls möglich einen Fix vorschlagen.
+- Die Unterstützung von Arch Linux erfolgt über ein PKGBUILD (siehe Installationsabschnitt); bei Problemen mit dem Paket beschreibe sie bitte in einem Issue und schlage falls möglich einen Fix vor — Pull Requests mit Distributions-Support sind willkommen.
 - Die Installationsanleitung befindet sich ganz unten.
 - Der Autor ist offen für Vorschläge und hilft beim Einstieg in das Projekt; bei Problemen bitte in [Issue](https://github.com/ORFLEM/just_enough_shell/issues/new) schreiben.
 - Der Autor wäre dankbar für Hilfe bei der Unterstützung anderer Distributionen und nimmt neue Pull Requests sofort an, wobei der Autor der Unterstützung genannt wird; gefragt sind unter anderem void linux, alt linux und debian.
@@ -177,10 +196,10 @@ In jes-cli wird micro zur Bearbeitung der Config verwendet; zum Beenden Ctrl+Q, 
     system = "x86_64-linux";
     hostname = "nixos";
 
-    specialArgs = {{ inherit inputs system hostname; }};
+    specialArgs = { inherit inputs system hostname; };
 
   in {
-    nixosConfigurations.${{hostname}} = nixpkgs.lib.nixosSystem {{
+    nixosConfigurations.${hostname} = nixpkgs.lib.nixosSystem {
       inherit system specialArgs;
       modules = [
 				jes.nixosModules.default
@@ -194,20 +213,39 @@ In jes-cli wird micro zur Bearbeitung der Config verwendet; zum Beenden Ctrl+Q, 
 ```nix
 programs.jes = {
   enable = true;
-  # autoStart = true; # default - false
+  # autoStart = true;  # default - false
+  # coreAura.enable = true;  # CoreAura-Systemdaemon (optional)
 };
 ```
 - NixOS neu bauen
 
-### Arch Linux oder Arch-basiert (kann fehlerhaft sein; bei Problemen bitte in [Issue](https://github.com/ORFLEM/just_enough_shell/issues/new) schreiben)
-- Arch Linux installieren (zur Vereinfachung empfehle ich EndeavourOS)
-<!-- - Installer ausführen (nicht überarbeitet): -->
-<!-- ```bash -->
-<!-- git clone https://github.com/ORFLEM/just_enough_shell.git && cd just_enough_shell && ./install_arch.sh -->
-<!-- ``` -->
+### Arch Linux / AUR
+```
+yay -S jes-shell-git
+```
+oder manuell aus dem Repository:
+```bash
+git clone https://github.com/ORFLEM/just_enough_shell.git
+cd just_enough_shell/packaging/arch
+makepkg -si
+```
 
-<!-- - Bei Fehlern manuell installieren: -->
-- Installation ist nur manuell möglich, automatisch ist defekt:
+### Fedora
+Fertige RPMs (und SRPMs) werden für jeden Tag auf [GitHub Releases](https://github.com/ORFLEM/just_enough_shell/releases) veröffentlicht.
+Build aus dem Quellcode: `packaging/fedora/jes.spec`.
+
+### ALT Linux
+Spec für Sisyphus: `packaging/alt/jes-shell.spec`.
+
+### Debian / Ubuntu
+Ein fertiges `.deb` wird für jeden Tag auf [GitHub Releases](https://github.com/ORFLEM/just_enough_shell/releases) veröffentlicht.
+
+### Nach der Installation (alle Distributionen außer NixOS)
+- Start: `jes-cli start-daemon`
+- Autostart: `systemctl --user enable --now jes`
+- CoreAura-Daemon (PC-Zustandsüberwachung, optional): `sudo systemctl enable --now coreaura`
+
+### Manuelle Installation auf Arch (Fallback)
 ```
 1. Arch Linux installieren (zur Vereinfachung empfehle ich EndeavourOS)
 2. yay oder paru installieren (yay: git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si)

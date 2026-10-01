@@ -106,6 +106,9 @@ ShellRoot {
                 weatherOpen =    states_c.weatherOpen ?? false;
                 wallpaperType =  states_c.wallpaperType ?? 1;
                 wallShaderName = states_c.wallShaderName ?? "";
+                audioOpen =      states_c.audioOpen ?? false;
+                networkOpen =    states_c.networkOpen ?? false;
+                bluetoothOpen =  states_c.bluetoothOpen ?? false;
             } catch (e) {
                 console.log("JES Error parsing states_cached.json at boot:", e);
             }
@@ -127,6 +130,9 @@ ShellRoot {
     property bool   wallPickerOpen: false
     property bool   minimapOpen:    false
     property bool   weatherOpen:    false
+    property bool   audioOpen:      false
+    property bool   networkOpen:    false
+    property bool   bluetoothOpen:  false
     property int    wallpaperType:  1
     property string wallShaderName: ""
 
@@ -142,7 +148,10 @@ ShellRoot {
             "minimapOpen":    minimapOpen,
             "weatherOpen":    weatherOpen,
             "wallpaperType":  wallpaperType,
-            "wallShaderName": wallShaderName
+            "wallShaderName": wallShaderName,
+            "audioOpen":      audioOpen,
+            "networkOpen":    networkOpen,
+            "bluetoothOpen":  bluetoothOpen
         };
         statesFileView.setText(JSON.stringify(data));
     }
@@ -207,6 +216,18 @@ ShellRoot {
         if (str.startsWith("file://"))
             str = str.substring(7);
         return str;
+    }
+    function toggleAudio() {
+        audioOpen = !audioOpen;
+        saveStatesToDisk();
+    }
+    function toggleNetwork() {
+        networkOpen = !networkOpen;
+        saveStatesToDisk();
+    }
+    function toggleBluetooth() {
+        bluetoothOpen = !bluetoothOpen;
+        saveStatesToDisk();
     }
 
     // ── Plugin settings bridge ─────────────────────────────────────────
@@ -577,13 +598,16 @@ ShellRoot {
 
     LockScreen { id: lockScreen }
 
-    // CoreAura { useSessionBus:  true }
+    CoreAura { useSessionBus: false }
 
     Btime {}
 
     PlayerPopup { isOpen: playerOpen }
     CalPopup    { isOpen: calOpen }
     WeatherPopup { isOpen: weatherOpen }
+    AudioPopup     { isOpen: audioOpen }
+    NetworkPopup   { isOpen: networkOpen }
+    BluetoothPopup { isOpen: bluetoothOpen }
     PopupSys    {}
 
     LazyLoader {
@@ -637,6 +661,15 @@ ShellRoot {
         }
         function togglePlugin() {
             root.togglePlugin();
+        }
+        function toggleAudio() {
+            root.toggleAudio();
+        }
+        function toggleNetwork() {
+            root.toggleNetwork();
+        }
+        function toggleBluetooth() {
+            root.toggleBluetooth();
         }
         function screenpicker(): void {
             screenpicker.activate();

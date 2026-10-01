@@ -502,7 +502,7 @@ WlrLayershell {
                             }
                             if (mouse.button === Qt.RightButton) {
                                 root.toggleCal()
-                                Quickshell.execDetached(["sh", "-c", root.localPath(Qt.resolvedUrl("../scripts/cal")), "reset"])  // Изменено
+                                Quickshell.execDetached(["sh", "-c", root.localPath(Qt.resolvedUrl("../scripts/cal")), "reset"])
                             }
                         }
                     }
@@ -524,7 +524,7 @@ WlrLayershell {
 
                     JsonListen {
                         id: cavaStream
-                        command: root.localPath(Qt.resolvedUrl("../scripts/Cava-internal"))  // Изменено
+                        command: root.localPath(Qt.resolvedUrl("../scripts/Cava-internal"))
                         onDataChanged: {
                             cava = typeof data === 'string' ? data : ""
                         }
@@ -809,7 +809,7 @@ WlrLayershell {
                                 onExited: audioButton.hovered = false
 
                                 onClicked: {
-                                    Quickshell.execDetached(["sh", "-c", "pavucontrol-qt"])
+                                    onClicked: root.toggleAudio()
                                 }
                             }
                         }
@@ -845,7 +845,7 @@ WlrLayershell {
                                 onExited: networkButton.hovered = false
 
                                 onClicked: {
-                                    Quickshell.execDetached(["sh", "-c", "foot " + root.localPath(Qt.resolvedUrl("../scripts/recolor.sh"))])  // Изменено
+                                    onClicked: root.toggleNetwork()
                                 }
                             }
                         }
@@ -881,7 +881,7 @@ WlrLayershell {
                                 onExited: bluetoothButton.hovered = false
 
                                 onClicked: {
-                                    Quickshell.execDetached(["sh", "-c", "blueman-manager"])
+                                    onClicked: root.toggleBluetooth()
                                 }
                             }
                         }

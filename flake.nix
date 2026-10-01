@@ -25,12 +25,15 @@
               go build -o launch ./cmd/launch
               go build -o screenpicker ./cmd/screenpicker
               go build -o music ./cmd/music
+              go build -o audio ./cmd/audio
+              go build -o network ./cmd/network
+              go build -o bluetooth ./cmd/bluetooth
               runHook postBuild
             '';
             installPhase = ''
               runHook preInstall
               mkdir -p $out/bin
-              install -Dm755 cal Cava-internal launch screenpicker music -t $out/bin
+              install -Dm755 cal Cava-internal launch screenpicker music audio network bluetooth -t $out/bin
               runHook postInstall
             '';
           };
@@ -40,8 +43,17 @@
             src = ./for-quickshell/go/wallpaper;
             vendorHash = null;
           };
+          coreaura = pkgsU.buildGoModule {
+            pname = "coreaura";
+            version = "1.0.0";
+            src = ./for-quickshell/go/coreaura;
+            vendorHash = null;
+            postInstall = ''
+              mv $out/bin/coreaura $out/bin/CoreAura
+            '';
+          };
         in
-        { inherit tools wallpaper-picker; };
+        { inherit tools wallpaper-picker coreaura; };
 
       mkJes = pkgsU:
         let
@@ -51,7 +63,7 @@
         in
         pkgsU.stdenvNoCC.mkDerivation {
           pname = "jes";
-          version = "0.1.0";
+          version = "02.10.2026";
           src = ./.;
 
           dontConfigure = true;
@@ -71,7 +83,7 @@
             cp -r .local/JES/quickshell/* $out/share/jes/quickshell/
             chmod 755 $out/share/jes/quickshell/scripts/* || true
 
-            for b in cal Cava-internal music; do
+            for b in cal Cava-internal music audio network bluetooth; do
               install -Dm755 ${go.tools}/bin/$b \
                 $out/share/jes/quickshell/scripts/$b
             done
@@ -83,6 +95,8 @@
               install -Dm755 ${go.wallpaper-picker}/bin/$b \
                 $out/share/jes/quickshell/wallpaper/$b
             done
+            install -Dm755 ${go.coreaura}/bin/CoreAura \
+              $out/share/jes/quickshell/CoreAura/CoreAura
 
             install -Dm755 .local/bin/jes-cli $out/bin/jes-cli
 
@@ -121,7 +135,7 @@
                   local cur opts
                   COMPREPLY=()
                   cur="''${COMP_WORDS[COMP_CWORD]}"
-                  opts="start-daemon reload-daemon stop-daemon wallShader toggleWallPicker wallType togglePlayer toggleCal togglePower toggleLaunch toggleMap toggleJwindow screenpicker getPlugin getLog editConf brightness-up brightness-down brightness-set brightness-get play-pause next prev next-player prev-player initPlugin makePlugin debuildPlugin pluginBuild pluginCache pluginClearCache blacklistAdd blacklistRemove blacklistList blacklistClear --help -h"
+                  opts="start-daemon reload-daemon stop-daemon wallShader toggleWallPicker wallType togglePlayer toggleCal togglePower toggleLaunch toggleMap toggleJwindow screenpicker getPlugin getLog editConf brightness-up brightness-down brightness-set brightness-get play-pause next prev next-player prev-player initPlugin makePlugin debuildPlugin pluginBuild pluginCache pluginClearCache blacklistAdd blacklistRemove blacklistList blacklistClear ping --help -h --version -v"
                   if [[ ''${COMP_CWORD} -eq 1 ]]; then
                       COMPREPLY=( $(compgen -W "''${opts}" -- "''${cur}") )
                       return 0
@@ -170,12 +184,44 @@
               type = lib.types.bool;
               default = false;
             };
+
+            coreAura = {
+              enable = lib.mkEnableOption "CoreAura system monitoring daemon";
+
+              package = lib.mkOption {
+                type = lib.types.package;
+                default = cfg.package;
+                defaultText = lib.literalExpression "config.programs.jes.package";
+                description = "Package providing the CoreAura binary.";
+              };
+
+              settings = lib.mkOption {
+                type = pkgs.formats.toml { }.type;
+                default = {
+                  CoreAura = {
+                    enabled = true;
+                    kernel_priority_max = 3;
+                    services = [ ];
+                    log_tail_lines = 300;
+                    resource_poll_interval_sec = 5;
+                    cpu_threshold_percent = 85;
+                    gpu_threshold_percent = 85;
+                    dedup_window_sec = 30;
+                  };
+                };
+                description = ''
+                  CoreAura TOML config. Written to /etc/jes/coreaura.toml.
+                  Matches the structure expected by main.go (top-level [CoreAura] table).
+                '';
+              };
+            };
           };
 
           config = lib.mkIf cfg.enable {
-            hardware.i2c.enable = true;
+            hardware.i2c.enable = lib.mkDefault true;
+            hardware.bluetooth.enable = lib.mkDefault true;
 
-            services.udev.extraRules = ''
+            services.udev.extraRules = lib.mkIf config.hardware.i2c.enable ''
               SUBSYSTEM=="i2c", KERNEL=="i2c-[0-9]*", TAG+="uaccess"
             '';
 
@@ -195,12 +241,12 @@
             ];
 
             environment.systemPackages = [ cfg.package ] ++ (with pkgs; [
-              jq playerctl ddcutil brightnessctl pamixer i2c-tools
-              cava libnotify inotify-tools dbus pciutils ffmpeg
-              cliphist wl-clipboard slurp grim taplo python314 zip unzip
-              foot lxqt.pavucontrol-qt blueman kdePackages.kdeconnect-kde
-              tela-icon-theme micro qt6.qtbase qt6.qtdeclarative
-              qt6.qtmultimedia qt6.qtshadertools qt6.qtwayland
+              jq ddcutil brightnessctl pamixer i2c-tools cava
+              libnotify dbus pciutils ffmpeg cliphist
+              wl-clipboard grim taplo python314 zip unzip
+              kdePackages.kdeconnect-kde micro qt6.qtbase
+              qt6.qtdeclarative qt6.qtmultimedia
+              qt6.qtshadertools qt6.qtwayland
               qt6.qtimageformats
             ]) ++ (with pkgsU; [ matugen quickshell ]);
 
@@ -217,6 +263,62 @@
                 ExecStart = "${pkgsU.quickshell}/bin/qs -c ${cfg.package}/JES/quickshell";
                 Restart = "on-failure";
                 RestartSec = 2;
+              };
+            };
+
+            # ── CoreAura daemon ────────────────────────────────────────
+
+            environment.etc."jes/coreaura.toml" = lib.mkIf cfg.coreAura.enable {
+              source = (pkgs.formats.toml { }).generate "coreaura.toml" cfg.coreAura.settings;
+            };
+
+            services.dbus.packages = lib.mkIf cfg.coreAura.enable [
+              (pkgs.writeTextDir "share/dbus-1/system.d/org.jes.CoreAura.conf" ''
+                <!DOCTYPE busconfig PUBLIC
+                  "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+                  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+                <busconfig>
+                  <policy user="root">
+                    <allow own="org.jes.CoreAura"/>
+                    <allow send_destination="org.jes.CoreAura"/>
+                    <allow receive_sender="org.jes.CoreAura"/>
+                  </policy>
+
+                  <policy context="default">
+                    <allow send_destination="org.jes.CoreAura"/>
+                    <allow receive_sender="org.jes.CoreAura"/>
+                  </policy>
+                </busconfig>
+              '')
+            ];
+
+            systemd.services.coreaura = lib.mkIf cfg.coreAura.enable {
+              description = "CoreAura — JES monitoring daemon";
+              wantedBy = [ "multi-user.target" ];
+              wants = [ "dbus.service" ];
+              after = [ "dbus.service" "systemd-journald.service" ];
+
+              path = with pkgs; [ systemd coreutils ];
+
+              serviceConfig = {
+                Type = "simple";
+                ExecStart = "${cfg.coreAura.package}/share/jes/quickshell/CoreAura/CoreAura -config /etc/jes/coreaura.toml";
+                Restart = "on-failure";
+                RestartSec = 2;
+
+                User = "root";
+                Group = "root";
+
+                NoNewPrivileges = true;
+                ProtectSystem = "full";
+                ProtectHome = false;
+                ProtectKernelTunables = true;
+                ProtectKernelModules = true;
+                ProtectControlGroups = true;
+                ProtectClock = true;
+                ProtectHostname = true;
+                PrivateTmp = true;
+                RestrictSUIDSGID = true;
               };
             };
           };

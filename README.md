@@ -8,7 +8,10 @@
 
 <div align="center">
 	<h4>
-  	<strong>System :</strong> <code>NixOS 26.05 (stable)</code> & <code>Arch Linux</code>
+  	<strong>Developed on :</strong> <code>NixOS 26.05 (stable)</code>
+	</h4>
+	<h4>
+  	<strong>Packages :</strong> NixOS &nbsp;·&nbsp; Arch (AUR) &nbsp;·&nbsp; Fedora &nbsp;·&nbsp; ALT &nbsp;·&nbsp; Debian / Ubuntu
 	</h4>
 </div>
 

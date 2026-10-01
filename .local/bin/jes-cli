@@ -134,6 +134,7 @@ getLog() {
 # ---------- daemon control ----------
 
 start_daemon() {
+    local log_mode="${1:-}"
     local pids
     pids=$(find_shell_pids)
     if [[ -n "$pids" ]]; then
@@ -141,7 +142,12 @@ start_daemon() {
         return 0
     fi
     echo "Starting Just Enough Shell daemon..."
-    setsid "$CRASH_WATCH" >/dev/null 2>&1 < /dev/null &
+    if [[ "$log_mode" == "-l" || "$log_mode" == "--log" ]]; then
+        # Показываем логи запуска (stdout+stderr crash-watch/qs прямо в терминал)
+        setsid "$CRASH_WATCH" < /dev/null &
+    else
+        setsid "$CRASH_WATCH" >/dev/null 2>&1 < /dev/null &
+    fi
     disown
 
     sleep 1
@@ -369,7 +375,7 @@ show_help() {
 Usage: jes-cli <command> [attributes]
 
 Available commands:
-  start-daemon                 - Start the background Just Enough Shell daemon
+  start-daemon [-l|--log]      - Start the background Just Enough Shell daemon (show startup logs)
   reload-daemon                - Restart the daemon (apply UI code changes)
   stop-daemon                  - Fully stop the shell execution
   ping                         - test runtime qs
@@ -418,6 +424,7 @@ Available commands:
   blacklistClear               - Wipe the whole blacklist
 
   -h, --help                   - Show this help manual
+  -v, --version                - Show JES version
 EOF
 }
 
@@ -425,7 +432,12 @@ if [ $# -gt 0 ]; then
     cmd="$1"
     shift
     case "$cmd" in
-        start-daemon)     start_daemon ;;
+        start-daemon)
+            case "${1:-}" in
+                -l|--log) start_daemon -l ;;
+                *)        start_daemon ;;
+            esac
+            ;;
         reload-daemon)    reload_daemon ;;
         stop-daemon)      stop_daemon ;;
         wallShader)       wallShader "$1" ;;
@@ -476,6 +488,7 @@ if [ $# -gt 0 ]; then
         blacklistClear)   blacklist_clear ;;
 
         "--help"|"-h")    show_help ;;
+        "--version"|"-v") echo "v02.10.2026" ;;
         *) echo "Unknown command: $cmd"; show_help; exit 1 ;;
     esac
 fi
