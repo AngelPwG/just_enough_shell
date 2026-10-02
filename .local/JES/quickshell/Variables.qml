@@ -13,17 +13,19 @@ Item {
     property var audio: ({})
     property var network: ({})
     property var bluetooth: ({})
-    // аудио — мгновенные обновления через pactl subscribe
+    
     JsonListen {
-        command: localPath(Qt.resolvedUrl("scripts/audio")) + " listen";
+        command: localPath(Qt.resolvedUrl("scripts/audio")) + " listen"
         onDataChanged: audio = data
     }
+    
     JsonListen {
-        command: localPath(Qt.resolvedUrl("scripts/network")) + " listen";
+        command: localPath(Qt.resolvedUrl("scripts/network")) + " listen"
         onDataChanged: network = data
     }
+    
     JsonListen {
-        command: localPath(Qt.resolvedUrl("scripts/bluetooth")) + " listen";
+        command: localPath(Qt.resolvedUrl("scripts/bluetooth")) + " listen"
         onDataChanged: bluetooth = data
     }
 
