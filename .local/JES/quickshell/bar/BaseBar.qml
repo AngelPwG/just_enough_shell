@@ -483,7 +483,7 @@ WlrLayershell {
                             font.family: fontFamily
                             font.pixelSize: fontSize
                             anchors.verticalCenter: parent.verticalCenter
-                            text: timeItem.dateInfo ? Qt.formatDateTime(clock.date, "yyyy-MM-dd") : Qt.formatDateTime(clock.date, "hh:mm:ss")
+                            text: timeItem.dateInfo ? Qt.formatDateTime(clock.date, (date_format ?? "dd.MM.yyyy")) : Qt.formatDateTime(clock.date, "hh:mm:ss")
                             Behavior on color { ColorAnimation { duration: 200 * root.animations } }
                         }
                     }

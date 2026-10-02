@@ -1,14 +1,36 @@
 #!/usr/bin/env bash
 
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-QS_BASE=(qs -c "$SCRIPT_DIR/../JES/quickshell")
+# --- резолвим реальный путь скрипта (через симлинки) ---
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
+# --- ищем корень JES: dev-репо (.local/JES), store (../JES), FHS (share/jes) ---
+JES_ROOT=""
+for cand in \
+  "$SCRIPT_DIR/../JES" \
+  "$SCRIPT_DIR/../share/jes" \
+  "$SCRIPT_DIR/../../JES" \
+  "$SCRIPT_DIR/../../share/jes"; do
+  if [ -f "$cand/quickshell/shell.qml" ]; then
+    JES_ROOT="$(cd "$cand" && pwd)"
+    break
+  fi
+done
+[ -z "$JES_ROOT" ] && JES_ROOT="$SCRIPT_DIR/../JES"
+
+QS_BASE=(qs -c "$JES_ROOT/quickshell")
 QS_CMD=("${QS_BASE[@]}" ipc call root)
-BRIGHTNESS_SCRIPT="$SCRIPT_DIR/../JES/quickshell/scripts/brightness.sh"
-MUSIC_SCRIPT="$SCRIPT_DIR/../JES/quickshell/scripts/music"
-WALLS_SCRIPT="$SCRIPT_DIR/../JES/quickshell/wallpaper/wallpaper-picker"
-PLUGIN_LIST_SCRIPT="$SCRIPT_DIR/../JES/quickshell/scripts/plugin_list.sh"
-CRASH_WATCH="$SCRIPT_DIR/../JES/quickshell/scripts/jes-crash-watch.sh"
+BRIGHTNESS_SCRIPT="$JES_ROOT/quickshell/scripts/brightness.sh"
+MUSIC_SCRIPT="$JES_ROOT/quickshell/scripts/music"
+WALLS_SCRIPT="$JES_ROOT/quickshell/wallpaper/wallpaper-picker"
+PLUGIN_LIST_SCRIPT="$JES_ROOT/quickshell/scripts/plugin_list.sh"
+CRASH_WATCH="$JES_ROOT/quickshell/scripts/jes-crash-watch.sh"
 
 BLACKLIST_FILE="$HOME/.cache/JES/blacklist"
 UI_TOKEN_FILE="$HOME/.cache/JES/aura_token"
@@ -17,8 +39,8 @@ CORE_CONFIG="/etc/jes/coreaura.toml"
 JES_HOST_VERSION="${JES_HOST_VERSION:-0.2.1}"
 SHELL_PID_FILE="${XDG_RUNTIME_DIR:-/tmp}/jes-shell.pid"
 
-export QT_PLUGIN_PATH="/run/current-system/sw/lib/qt-6/plugins:$SCRIPT_DIR/../JES/quickshell/"
-export QML2_IMPORT_PATH="/run/current-system/sw/lib/qt-6/qml:$SCRIPT_DIR/../JES/quickshell/"
+export QT_PLUGIN_PATH="/run/current-system/sw/lib/qt-6/plugins:$JES_ROOT/quickshell/"
+export QML2_IMPORT_PATH="/run/current-system/sw/lib/qt-6/qml:$JES_ROOT/quickshell/"
 
 quote() {
     printf '%s' "$1" | sed "s/'/'\\\\''/g; 1s/^/'/; \$s/\$/'/"
@@ -424,7 +446,6 @@ Available commands:
   blacklistClear               - Wipe the whole blacklist
 
   -h, --help                   - Show this help manual
-  -v, --version                - Show JES version
 EOF
 }
 

@@ -13,18 +13,23 @@ QtObject {
 
     function _normalize(cmd) {
         // Паритет со старым JsonListen: раскрываем ~ (первое вхождение)
-        return cmd.replace("~", Quickshell.env("HOME"))
+        return cmd.trim().replace("~", Quickshell.env("HOME"))
     }
+
+    readonly property int maxRestarts: 3
 
     // Вернуть entry-объект с сигналом line(var value). Не null только при непустой команде.
     function acquire(command) {
-        if (!command)
+        if (!command) {
+            console.warn("[StreamManager] acquire: пустая команда, поток не создан")
             return null
+        }
         const key = _normalize(command)
         let e = _streams[key]
         if (!e) {
             e = streamComponent.createObject(manager, { key: key })
             _streams[key] = e
+            console.log("[StreamManager] new stream:", key)
         }
         e.refs++
         return e
@@ -50,7 +55,31 @@ QtObject {
             id: stream
             property string key: ""
             property int refs: 0
+            property int restarts: 0
             signal line(var value)
+
+            // Рестарт до maxRestarts с паузой 1с; потом — "пизда потоку"
+            function _restart() {
+                if (refs <= 0)
+                    return // уже release'нут — не рестартуем
+                if (restarts >= manager.maxRestarts) {
+                    console.error("[StreamManager] Process dead permanently after",
+                                  manager.maxRestarts, "restarts:", key)
+                    return
+                }
+                restarts++
+                console.warn("[StreamManager] restart #" + restarts + ":", key)
+                restartTimer.start()
+            }
+
+            property Timer restartTimer: Timer {
+                id: restartTimer
+                interval: 1000
+                onTriggered: {
+                    stream.proc.running = false
+                    stream.proc.running = true
+                }
+            }
 
             property Process proc: Process {
                 command: ["bash", "-c", stream.key]
@@ -83,8 +112,12 @@ QtObject {
                 }
 
                 onExited: (code, status) => {
-                    if (code !== 0)
+                    if (stream.refs <= 0)
+                        return // поток освобождён, это штатное уничтожение
+                    if (code !== 0) {
                         console.error("[StreamManager] Process died! Code:", code, "Cmd:", stream.key)
+                        stream._restart()
+                    }
                 }
             }
         }

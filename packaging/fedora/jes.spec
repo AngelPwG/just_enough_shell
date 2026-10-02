@@ -8,6 +8,8 @@ Vcs:            https://github.com/ORFLEM/just_enough_shell
 
 Source0:        %{name}-%{version}.tar.gz
 
+%global debug_package %{nil}
+
 BuildRequires:  golang
 BuildRequires:  systemd-rpm-macros
 
@@ -41,7 +43,7 @@ daemon, plugin system, systemd units and udev rules.
 %build
 cd for-quickshell/go
 export GOFLAGS="-mod=vendor"
-ldflags="-s -w -buildid="
+ldflags="-s -w -B gobuildid"
 go build -buildvcs=false -trimpath -ldflags="$ldflags" -o launch         ./cmd/launch
 go build -buildvcs=false -trimpath -ldflags="$ldflags" -o music          ./cmd/music
 go build -buildvcs=false -trimpath -ldflags="$ldflags" -o cal            ./cmd/cal

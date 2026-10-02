@@ -7,9 +7,11 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/godbus/dbus/v5"
@@ -457,12 +459,42 @@ func notifyPlayerSwitched(conn *dbus.Conn) {
 	_ = conn.Emit("/org/jes/Music", "org.jes.Music.PlayerSwitched")
 }
 
+// acquireBusName забирает org.jes.Music с ретраями.
+// При reload'е QML-сцены старый инстанс уже убит, но шина освобождает
+// имя не мгновенно — DoNotQueue без ретрая давал молчаливый os.Exit(0)
+// и мёртвый стрим до перезапуска сцены.
+func acquireBusName(conn *dbus.Conn) bool {
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		reply, err := conn.RequestName("org.jes.Music", dbus.NameFlagDoNotQueue)
+		if err == nil && reply == dbus.RequestNameReplyPrimaryOwner {
+			return true
+		}
+		if time.Now().After(deadline) {
+			return false
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+}
+
 func runDaemon(conn *dbus.Conn) {
-	// 1. Блокировка повторного запуска через забор DBus-имени
-	reply, err := conn.RequestName("org.jes.Music", dbus.NameFlagDoNotQueue)
-	if err != nil || reply != dbus.RequestNameReplyPrimaryOwner {
-		// Демон уже запущен в системе, тихо завершаем дубликат
+	// 0. Graceful shutdown: по SIGTERM/SIGINT закрываем коннект —
+	//    имя на шине освобождается немедленно, рестартующий инстанс
+	//    не ловит гонку на занятое имя.
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		<-sig
+		conn.Close()
 		os.Exit(0)
+	}()
+
+	// 1. Блокировка повторного запуска через забор DBus-имени
+	if !acquireBusName(conn) {
+		// Имя так и не освободилось (живой демон где-то ещё).
+		// Exit code 2 — отличимо от штатного 0, StreamManager отрестартует.
+		fmt.Fprintln(os.Stderr, "org.jes.Music is still owned after retries, exiting with code 2")
+		os.Exit(2)
 	}
 
 	// 2. Слушаем события СТРОГО на MPRIS-объектах

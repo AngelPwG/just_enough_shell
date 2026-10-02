@@ -14,20 +14,6 @@ Item {
     property var network: ({})
     property var bluetooth: ({})
     
-    JsonListen {
-        command: localPath(Qt.resolvedUrl("scripts/audio")) + " listen"
-        onDataChanged: audio = data
-    }
-    
-    JsonListen {
-        command: localPath(Qt.resolvedUrl("scripts/network")) + " listen"
-        onDataChanged: network = data
-    }
-    
-    JsonListen {
-        command: localPath(Qt.resolvedUrl("scripts/bluetooth")) + " listen"
-        onDataChanged: bluetooth = data
-    }
 
     JsonListen {
         command: localPath(Qt.resolvedUrl("scripts/vol.sh"))
@@ -39,6 +25,7 @@ Item {
     JsonListen {
         id: plrStream
         command: localPath(Qt.resolvedUrl("scripts/music"))
+        debug: true
         onDataChanged: {
             plr = data
         }
@@ -81,6 +68,30 @@ Item {
         command: localPath(Qt.resolvedUrl("scripts/battery.sh"))
         onDataChanged: {
             lbat = data
+        }
+    }
+
+    JsonListen {
+        id: settingsAudio
+        command: localPath(Qt.resolvedUrl("scripts/audio")) + " listen"
+        onDataChanged: {
+            audio = data
+        }
+    }
+    
+    JsonListen {
+        id: settingsNetwork
+        command: localPath(Qt.resolvedUrl("scripts/network")) + " listen"
+        onDataChanged: {
+            network = data
+        }
+    }
+    
+    JsonListen {
+        id: settingsBluetooth
+        command: localPath(Qt.resolvedUrl("scripts/bluetooth")) + " listen"
+        onDataChanged: {
+            bluetooth = data
         }
     }
 }

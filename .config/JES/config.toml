@@ -13,7 +13,7 @@ mainRad = 10 # 0-25
 fontSize = 17
 fontFamily = "Mononoki Nerd Font Propo"
 enable_base16 = false
-do_not_sync_rad = true # disable sync wm roundings with jes mainRad
+do_not_sync_rad = true
 disableCorners = false # disable roundings your monitors
 
 # bar
@@ -23,13 +23,14 @@ barHeight = 30
 disableCava = false
 nanoPlayer = false # do your player more small
 nanoPlrSize = 200
+date_format = "dd.MM.yyyy"
 
 # launcher
 changeShader = ""
 
 # other
 custom_wallpaper_engine = false
-user_matugen = true
+user_matugen = false
 doNotDisturb = false
 openweather_key = ""
 
@@ -38,6 +39,6 @@ directory = "~/.config/JES/plugins/"
 enableFolders = false
 
 # [[plugin]]
-# name = "example plugin"
-# uuid = "exemaple-uuidv4-from-manifest"
-# active = false
+# name = "example Plugin"
+# uuid = "uuidv4"
+# active = true

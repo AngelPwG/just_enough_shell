@@ -362,6 +362,7 @@ ShellRoot {
             root._cfg_user_matugen    = s.user_matugen            ?? false
             root._cfg_do_not_sync_rad = s.do_not_sync_rad         ?? false
             root._cfg_changeShader    = s.changeShader            ?? ""
+            root._cfg_date_format     = s.date_format             ?? ""
             root._cfg_wtw             = s.wtw                     ?? 6
             root._cfg_spacing         = s.spacing                 ?? 3
             root._cfg_margins         = s.margins                 ?? 3
@@ -451,6 +452,7 @@ ShellRoot {
     property int    _cfg_margins:         3
     property string _cfg_bg_type:         "mono"
     property string _cfg_pluginDir:       ""
+    property string _cfg_date_format:     ""
     property var    _pluginConfigList:    []
 
     // ── Public properties ─────────────────────────────────────────────────
@@ -475,6 +477,7 @@ ShellRoot {
     property int    spacing:         _cfg_spacing
     property int    margins:         _cfg_margins
     property string bg_type:         _cfg_bg_type
+    property string date_format:     _cfg_date_format
     property bool   has_owm_key:     false
     property string wm:              _cfg_wm      == "auto" ? (Quickshell.env("XDG_CURRENT_DESKTOP") ?? "sway") : _cfg_wm
     property string wm_type:         _cfg_wm_type == "auto" ? (wm == "driftwm" ? "coordinates" : "workspaces") : _cfg_wm_type
